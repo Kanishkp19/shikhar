@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest", "--project-ref", "<YOUR_PROJECT_REF>"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "<YOUR_SUPABASE_ACCESS_TOKEN>"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@github/mcp-server@latest"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_GITHUB_PAT>"
+      }
+    },
+    "vercel": {
+      "command": "npx",
+      "args": ["-y", "@vercel/mcp-server@latest"],
+      "env": {
+        "VERCEL_TOKEN": "<YOUR_VERCEL_TOKEN>"
+      }
+    }
+  }
+}

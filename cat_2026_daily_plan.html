@@ -1,0 +1,319 @@
+
+<h2 class="sr-only">CAT 2026 daily preparation plan from August 1 to November 29 with 121 days and 28 full mocks</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.app{font-family:var(--font-sans);max-width:740px;margin:0 auto;padding:1rem 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
+.stat{background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.sv{font-size:20px;font-weight:500;color:var(--text-primary)}
+.sl{font-size:11px;color:var(--text-muted);margin-top:2px}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:1rem}
+.ptab{padding:6px 13px;border-radius:var(--radius);border:0.5px solid var(--border);font-size:12px;font-weight:500;cursor:pointer;color:var(--text-secondary);background:transparent;transition:all .15s}
+.ptab.on{color:#fff;border-color:transparent}
+.pcard{border-radius:12px;padding:12px 16px;margin-bottom:1rem;border:0.5px solid}
+.pcard-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.ptitle{font-size:14px;font-weight:500}
+.psub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1rem}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted)}
+.ld{width:9px;height:9px;border-radius:2px}
+.week{margin-bottom:8px;border:0.5px solid var(--border);border-radius:10px;overflow:hidden}
+.whdr{width:100%;padding:11px 14px;background:var(--surface-1);border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;text-align:left}
+.whdr:hover{background:var(--surface-0)}
+.wnum{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#fff;flex-shrink:0}
+.winfo{margin-left:9px}
+.wtitle{font-size:13px;font-weight:500;color:var(--text-primary)}
+.wsub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.wbody{padding:6px 10px 10px}
+.dc{border-radius:8px;padding:9px 11px;margin-top:7px;border:0.5px solid}
+.dtop{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap}
+.dnum{font-size:10px;font-weight:500;color:var(--text-muted);background:var(--surface-2);border:0.5px solid var(--border);border-radius:4px;padding:1px 6px}
+.ddate{font-size:12px;font-weight:500;color:var(--text-primary)}
+.dtag{font-size:10px;font-weight:500;border-radius:4px;padding:1px 7px}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+.ds{background:rgba(255,255,255,0.5);border-radius:5px;padding:5px 7px}
+.dsl{font-size:10px;font-weight:500;letter-spacing:.3px;margin-bottom:2px}
+.dst{font-size:11px;color:var(--text-secondary);line-height:1.45}
+.dnote{font-size:11px;color:var(--text-muted);line-height:1.4;border-top:0.5px solid rgba(128,128,128,.15);padding-top:5px}
+@media(max-width:480px){.dgrid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+<div class="app">
+<div class="stats">
+  <div class="stat"><div class="sv">121</div><div class="sl">Total days</div></div>
+  <div class="stat"><div class="sv">28</div><div class="sl">Full mocks</div></div>
+  <div class="stat"><div class="sv">~820</div><div class="sl">Study hours</div></div>
+  <div class="stat"><div class="sv" id="cntdn">–</div><div class="sl" id="cntdn-lbl">Days to exam</div></div>
+</div>
+<div class="legend">
+  <div class="li"><div class="ld" style="background:#3b82f6"></div>Mock day</div>
+  <div class="li"><div class="ld" style="background:#f59e0b"></div>Analysis</div>
+  <div class="li"><div class="ld" style="background:#16a34a"></div>Review</div>
+  <div class="li"><div class="ld" style="background:var(--border-strong)"></div>Study day</div>
+</div>
+<div class="tabs" id="tabs"></div>
+<div id="pcard"></div>
+<div id="weeks"></div>
+</div>
+<script>
+const PH={
+  August:   {c:"#dc2626",bg:"#fef2f2",bd:"#fca5a5",h:"4–5 hrs/day",t:"Foundation Sprint"},
+  September:{c:"#ea580c",bg:"#fff7ed",bd:"#fdba74",h:"5–6 hrs/day",t:"Deep Practice & Mock Ramp"},
+  October:  {c:"#16a34a",bg:"#f0fdf4",bd:"#86efac",h:"6–7 hrs/day",t:"Mock Marathon"},
+  November: {c:"#2563eb",bg:"#eff6ff",bd:"#93c5fd",h:"4–5 hrs/day",t:"Final Sprint & Taper"},
+};
+const TS={
+  mock:    {bg:"#eff6ff",bd:"#93c5fd",tag:"MOCK",tc:"#2563eb"},
+  analysis:{bg:"#fffbeb",bd:"#fde047",tag:"ANALYSIS",tc:"#ca8a04"},
+  review:  {bg:"#f0fdf4",bd:"#86efac",tag:"REVIEW",tc:"#16a34a"},
+};
+const mk=(n,x)=>({type:"mock",qa:`Full Mock #${n} — 120 min, exam conditions. Phone off, timer on.`,dilr:`Part of Full Mock #${n}.`,varc:`Part of Full Mock #${n}.`,note:x||"Start exactly on time. Full simulation. No distractions whatsoever."});
+const an=(n,x)=>({type:"analysis",qa:`Mock #${n} QA — every wrong answer with root cause (careless vs conceptual)`,dilr:`Mock #${n} DILR — set selection decisions + in-set solving errors`,varc:`Mock #${n} VARC — RC accuracy per passage type + VA question audit`,note:x||"Careless errors = slow down. Conceptual errors = targeted practice. Update all error logs."});
+
+const WEEKS=[
+{w:1,p:"August",d:"Aug 1–7",t:"Diagnostic & Arithmetic Core",days:[
+{n:1,date:"Aug 1 (Sat)",type:"mock",qa:"Diagnostic mock — cold, no prep, full 120 min",dilr:"Part of diagnostic",varc:"Part of diagnostic",note:"Don't study beforehand. True baseline only. Build your error log template tonight. 121 days — the sprint starts NOW."},
+{n:2,date:"Aug 2 (Sun)",type:"analysis",qa:"QA diagnostic — which topics struggled most?",dilr:"DILR diagnostic — which set types were hardest?",varc:"VARC diagnostic — RC accuracy + reading speed",note:"Build error log template. Every mistake logged with root cause = the habit that separates 99+ percentilers."},
+{n:3,date:"Aug 3 (Mon)",qa:"Percentages — concepts + 25 problems (Quantum CAT Ch.1)",dilr:"2 table-based DI sets",varc:"1 article (The Hindu editorial) + 2 RC passages",note:"Reading habit: Day 1. One article, every single day, no exceptions. Anki: add 5 percentage formula cards today."},
+{n:4,date:"Aug 4 (Tue)",qa:"Ratio & Proportion — concepts + 25 problems",dilr:"2 bar/line graph DI sets",varc:"1 article (The Economist) + 2 RC + identify author tone",note:"Tone: is the author critical, appreciative, neutral, or analytical? Pay attention to adjectives and verbs."},
+{n:5,date:"Aug 5 (Wed)",qa:"TSD — basics + trains, boats, relative speed (30 problems)",dilr:"2 pie chart sets + 1 easy linear arrangement intro",varc:"1 article + 2 RC + Para Jumble intro (5 PJs — find the opening sentence first)",note:"Compressed timeline = no slack days. PJ clue: the opener has NO pronoun at start ('he', 'they', 'it')."},
+{n:6,date:"Aug 6 (Thu)",qa:"Time & Work — LCM method + 25 problems",dilr:"Linear arrangements — 2 easy-medium sets",varc:"1 article + 2 RC passages (main idea focus)",note:"T&W LCM method: express everyone's rate as 1/days, find LCM, work in units. Add to Anki."},
+{n:7,date:"Aug 7 (Fri)",type:"review",qa:"Redo 10 problems you got wrong this week. Time yourself.",dilr:"Error review from all DILR sets this week",varc:"Re-read 1 article — what is the author's central argument?",note:"Week 1 done. Baseline set, reading habit started, Anki deck running. This weekly loop repeats 18 more times."},
+]},
+{w:2,p:"August",d:"Aug 8–14",t:"Arithmetic II + Number System",days:[
+{n:8,date:"Aug 8 (Sat)",qa:"Profit & Loss — markup, discount, successive discounts (25 problems)",dilr:"2 linear arrangement sets (medium)",varc:"1 article + 2 RC passages + 5 Para Jumbles",note:"P&L trap: discount is ALWAYS on marked price, not cost price. Read every word problem carefully."},
+{n:9,date:"Aug 9 (Sun)",qa:"SI & CI — formulas + 20 problems",dilr:"Circular arrangements — 2 sets",varc:"1 article + 2 RC passages + 5 Para Summaries",note:"Para Summary: best option captures the CENTRAL claim. Ignore examples and statistics in options."},
+{n:10,date:"Aug 10 (Mon)",qa:"Averages (deviation method) + Mixtures & Alligation (30 problems)",dilr:"2 distribution/scheduling sets",varc:"1 article + 2 RC passages + 5 Odd Sentence Out",note:"Alligation cross method: memorize once, use forever. Odd Sentence breaks logical flow OR contradicts."},
+{n:11,date:"Aug 11 (Tue)",qa:"Partnerships + 30 mixed arithmetic problems timed (45 min)",dilr:"2 distribution sets",varc:"1 article + 3 RC passages + all VA types (5 each)",note:"First timed QA session. You'll feel slow — that's expected. Speed is built through repetition."},
+{n:12,date:"Aug 12 (Wed)",qa:"Number System — LCM, HCF, Factors + 20 problems",dilr:"Scheduling sets — 2 medium",varc:"1 article + 2 RC passages (inference focus)",note:"HCF vs LCM: 'greatest' → HCF. 'smallest' → LCM. Most errors come from picking the wrong one."},
+{n:13,date:"Aug 13 (Thu)",qa:"Remainders + Divisibility + Unit digit cyclicity + Factor counting (30 problems)",dilr:"2 games & tournaments sets (draw the bracket FIRST, always)",varc:"1 article + 2 RC passages + 5 Para Jumbles",note:"Factor counting: if N = aᵖ × bq, total factors = (p+1)(q+1). Divisibility by 3: digit sum; by 11: alternate digit difference."},
+{n:14,date:"Aug 14 (Fri)",type:"review",qa:"50-question arithmetic + numbers test (60 min). Score yourself honestly.",dilr:"2 sets, any type. Track time per set.",varc:"2 RC passages + error review from the week",note:"Arithmetic + Number System complete. Formula sheet growing. First target: 40+ correct in 60 min."},
+]},
+{w:3,p:"August",d:"Aug 15–21",t:"Algebra + Geometry I",days:[
+{n:15,date:"Aug 15 (Sat)",qa:"Linear & Quadratic equations — 25 problems (try factorization first)",dilr:"2 mixed DILR sets",varc:"1 article + 3 RC passages",note:"Quadratics: 90% of CAT quadratics are factorable. Spend 5 sec checking before using the formula."},
+{n:16,date:"Aug 16 (Sun)",qa:"Inequalities + AP/GP + Functions — 30 problems",dilr:"2 complex arrangements",varc:"1 article + 2 RC passages (author tone focus)",note:"Inequality direction FLIPS when multiplying or dividing by a negative. Functions: usually f(g(x)) or domain/range."},
+{n:17,date:"Aug 17 (Mon)",type:"mock",qa:"VARC sectional mock: 24 Qs in 40 min. Treat it as real.",dilr:"2 DILR sets timed (40 min)",varc:"Analyze every VARC sectional answer. Every single wrong one.",note:"First sectional mock. Algebra done in 2 days — the compressed schedule demands full focus each session."},
+{n:18,date:"Aug 18 (Tue)",qa:"Triangles — similarity, congruence, medians, angle bisector (25 problems)",dilr:"Network-based sets — 2 medium",varc:"1 article + 2 RC passages",note:"Geometry iron rule: DRAW EVERY FIGURE. No mental geometry in CAT. Ever."},
+{n:19,date:"Aug 19 (Wed)",qa:"Circles — chords, tangents, arc, sector area (20 problems)",dilr:"2 network/flow sets",varc:"1 article + 2 RC passages + 5 Para Jumbles",note:"Tangent-radius = 90°. Angle in semicircle = 90°. These two unlock 80% of circle problems."},
+{n:20,date:"Aug 20 (Thu)",qa:"Quadrilaterals + Polygons — 20 problems",dilr:"2 complex constraint-based sets (list ALL constraints before drawing)",varc:"1 article + 3 RC passages",note:"Constraint sets: missing 1 constraint = wrong answers to all 4–5 questions. List every single one."},
+{n:21,date:"Aug 21 (Fri)",type:"review",qa:"Redo this week's algebra + geometry errors, timed",dilr:"2 caselet DI sets (underline key numbers while reading)",varc:"2 RC passages + all VA types",note:"Caselet tip: don't memorize the data. Underline it. Refer back when answering."},
+]},
+{w:4,p:"August",d:"Aug 22–28",t:"Geometry II + Modern Math",days:[
+{n:22,date:"Aug 22 (Sat)",qa:"Coordinate Geometry — 20 problems (distance, midpoint, slope)",dilr:"2 Venn diagram DI sets",varc:"1 article + 3 RC passages (aim for 250 WPM reading speed)",note:"CAT coordinate geometry stays basic: distance, section formula, slope, line equations. Master those four."},
+{n:23,date:"Aug 23 (Sun)",qa:"Trigonometry (height & distance only) + Mensuration 2D/3D (30 problems)",dilr:"2 mixed complex sets",varc:"1 article + 2 RC passages",note:"CAT trig = sin/cos/tan basics + height & distance. Nothing beyond that. Mensuration: memorize all area/volume formulas today."},
+{n:24,date:"Aug 24 (Mon)",qa:"Permutation & Combination — 20 problems (arrangement vs selection)",dilr:"2 complex mixed sets + SET SELECTION DRILL: scan 4 sets in 5 min, rank, pick best 2",varc:"1 article + 3 RC passages",note:"P&C key: 'ways to ARRANGE?' → P. 'GROUPS/SELECTIONS?' → C. Set selection is THE DILR skill — drill it weekly from now."},
+{n:25,date:"Aug 25 (Tue)",qa:"Probability + Set Theory — 20 problems",dilr:"2 mixed timed sets",varc:"1 article + 3 RC passages + all VA",note:"P(A∪B) = P(A)+P(B)−P(A∩B). Draw the Venn diagram first. Prevents double-counting every time."},
+{n:26,date:"Aug 26 (Wed)",qa:"50 mixed QA all topics timed (65 min)",dilr:"3 mixed complex sets",varc:"1 article + 3 RC passages",note:"Mixed QA = real exam experience. No topic grouping. Topic-switching instinct is a skill — build it."},
+{n:27,date:"Aug 27 (Thu)",qa:"Section simulation: 22 Qs in 40 min (real QA section pace)",dilr:"Section simulation: 20 Qs in 40 min",varc:"Section simulation: 24 Qs in 40 min",note:"First full section simulations for all three. Note the gap between current pace and required pace."},
+{n:28,date:"Aug 28 (Fri)",type:"review",qa:"Full August QA revision: 50 Qs across all topics (70 min). Score yourself.",dilr:"4 sets in 40 min — measure your attempt rate",varc:"2 RCs + all VA types",note:"ALL QA topics covered in 4 weeks. Foundation done. Reading habit locked. Error log running. Now we mock."},
+]},
+{w:5,p:"August",d:"Aug 29–31",t:"First Full Mock",days:[
+{n:29,date:"Aug 29 (Sat)",qa:"Arithmetic speed drill: 50 problems in 50 min target",dilr:"3 complex sets — include 1 games & tournaments",varc:"1 article + 3 RC passages (target 65%+ accuracy)",note:"From September: time EVERYTHING. Accuracy first, speed second. Quality over volume."},
+{n:30,date:"Aug 30 (Sun)",...mk(1,"Full Mock #1. Start at 9 AM. Phone off. 120 min exact. First real CAT simulation.")},
+{n:31,date:"Aug 31 (Mon)",...an(1,"Compare with diagnostic. What improved? What didn't? Section by section. AUGUST COMPLETE — foundation in 31 days.")},
+]},
+{w:6,p:"September",d:"Sep 1–7",t:"Timed Practice Engine",days:[
+{n:32,date:"Sep 1 (Tue)",qa:"Fix top 3 QA weak areas from Mock #1 — 30 targeted problems",dilr:"3 complex sets",varc:"1 article + 3 RC passages",note:"Mock → Analysis → Targeted Fix = the engine of your improvement. Never skip the fix step."},
+{n:33,date:"Sep 2 (Wed)",qa:"50 mixed QA timed",dilr:"3 complex sets",varc:"1 article + 3 RC passages + 5 Para Summaries",note:"Daily check from now: 50 QA · 3 DILR sets · 1 article. If one slips, fix it tomorrow. Non-negotiable."},
+{n:34,date:"Sep 3 (Thu)",qa:"50 mixed QA timed",dilr:"3 sets + set selection drill",varc:"1 article + 3 RC passages + all VA types (10 each)",note:"TITA has ZERO negative marks. Every Para Jumble, Summary, Odd Sentence MUST be attempted."},
+{n:35,date:"Sep 4 (Fri)",qa:"50 mixed QA timed",dilr:"Set selection drill: 5 sets → scan 5 min → pick 3 → complete 35 min",varc:"1 article + 3 RC (push reading speed: target 250 WPM)",note:"RC speed: track words per minute with a timer. Improvement is visible within 2 weeks of tracking."},
+{n:36,date:"Sep 5 (Sat)",...mk(2,"Full Mock #2. Note your percentile carefully. The improvement trend starts here.")},
+{n:37,date:"Sep 6 (Sun)",...an(2,"M1 vs M2: attempts, accuracy, net score per section. What changed? What didn't?")},
+{n:38,date:"Sep 7 (Mon)",type:"review",qa:"Top 3 QA error types identified in error log?",dilr:"Which set type takes most time vs gives most returns?",varc:"Which RC question type do you consistently miss?",note:"Your error fingerprint is now visible. Most people repeat the same 3 mistake types. Fix these."},
+]},
+{w:7,p:"September",d:"Sep 8–14",t:"Progressive Intensity",days:[
+{n:39,date:"Sep 8 (Tue)",qa:"Arithmetic speed drill: 60 problems in 50 min target",dilr:"3 complex sets",varc:"1 article + 3 RC passages",note:"Speed drills build automatic recall. Arithmetic should feel mechanical by late October."},
+{n:40,date:"Sep 9 (Wed)",...mk(3,"Full Mock #3. Two mocks a week is the September rhythm.")},
+{n:41,date:"Sep 10 (Thu)",...an(3,"3-mock trend: attempts/accuracy/net score. What's improving? What isn't? Adjust approach.")},
+{n:42,date:"Sep 11 (Fri)",qa:"Targeted QA from Mock #3 weak areas — 30 problems",dilr:"3 complex sets",varc:"1 article + 3 RC + 10 Para Jumbles timed (15 min for 10)",note:"PJ target pace: 90 sec each for exam. Work toward that gradually this month."},
+{n:43,date:"Sep 12 (Sat)",...mk(4,"Full Mock #4. Pushing toward 90th+ percentile.")},
+{n:44,date:"Sep 13 (Sun)",...an(4,"4-mock trend documented: top 3 QA errors, DILR set types mastered, VARC accuracy.")},
+{n:45,date:"Sep 14 (Mon)",type:"review",qa:"Formula sheet revision + Anki review (20 min)",dilr:"DILR set type performance table — which types give best attempt rate?",varc:"RC error log — inference and tone question patterns",note:"Loop established: mock → analyze → fix. 4 mocks done, 24 to go."},
+]},
+{w:8,p:"September",d:"Sep 15–21",t:"Consolidation",days:[
+{n:46,date:"Sep 15 (Tue)",qa:"50 mixed QA timed — target 85%+ accuracy",dilr:"3 complex sets",varc:"1 article + 3 RC passages",note:"85% accuracy = right zone for September. If below this, slow down and prioritize accuracy first."},
+{n:47,date:"Sep 16 (Wed)",...mk(5,"Full Mock #5. Trend M1 → M5 should show clear improvement.")},
+{n:48,date:"Sep 17 (Thu)",...an(5,"Categorize DILR sets: 'profitable' (fast + accurate) vs 'avoid' (slow + errors). Build your preference list.")},
+{n:49,date:"Sep 18 (Fri)",qa:"Geometry + Number System targeted — 30 problems (your 2 weakest subtopics)",dilr:"3 complex sets — networks + constraints",varc:"1 article + 3 RC passages",note:"Targeted QA = only your 2 weakest subtopics from mock performance. Not random problems."},
+{n:50,date:"Sep 19 (Sat)",qa:"Algebra + Modern Math targeted — 30 problems",dilr:"3 sets — games & scheduling focus",varc:"1 article + 3 RC + Para Summary + Odd Sentence",note:"Modern Math (P&C, Probability): engineers often overconfident here. Don't skip targeted practice."},
+{n:51,date:"Sep 20 (Sun)",...mk(6,"Full Mock #6. Checking for consistent 90th+ percentile now.")},
+{n:52,date:"Sep 21 (Mon)",...an(6,"Plot percentile trend M1→M6. Should be rising. If flat, find the barrier and change approach.")},
+]},
+{w:9,p:"September",d:"Sep 22–28",t:"Mock Rhythm + Error Patterns",days:[
+{n:53,date:"Sep 22 (Tue)",qa:"40 mixed QA — fix mock error patterns",dilr:"3 complex sets",varc:"4 RC passages — RC marathon sessions begin",note:"RC marathons from now: 4–6 passages in one sitting. Builds exam-day stamina and concentration."},
+{n:54,date:"Sep 23 (Wed)",...mk(7)},
+{n:55,date:"Sep 24 (Thu)",type:"analysis",qa:"Categorize every QA mistake: CARELESS (rushed) vs CONCEPTUAL (didn't know)",dilr:"DILR: wrong set choice errors vs in-set solving errors",varc:"VARC: missed main idea vs inference vs tone — your weakest type?",note:"Careless = slow down. Conceptual = targeted practice. These need completely different fixes."},
+{n:56,date:"Sep 25 (Fri)",qa:"40 QA — write out every step (careless error fix protocol)",dilr:"3 complex sets",varc:"1 article + 5 RC passages",note:"Writing steps feels slow but eliminates 70% of careless errors within 10 days. Painful, powerful."},
+{n:57,date:"Sep 26 (Sat)",...mk(8)},
+{n:58,date:"Sep 27 (Sun)",...an(8,"DILR: measure your first 7 min. Are you picking profitable sets? Or getting stuck on hard ones?")},
+{n:59,date:"Sep 28 (Mon)",type:"review",qa:"List top 5 QA traps — problem types you consistently fall for",dilr:"List 'death trap' DILR set types — ones to AVOID in the exam",varc:"List 'death trap' RC question types — know your blind spots",note:"Avoiding your worst question types can add +2 to +3% to net score. Skipping strategically is a skill."},
+]},
+{w:10,p:"September",d:"Sep 29–30",t:"September Close",days:[
+{n:60,date:"Sep 29 (Tue)",...mk(9,"Full Mock #9. End of September. October is the decisive month.")},
+{n:61,date:"Sep 30 (Wed)",type:"review",qa:"Mock #9 analysis + September scorecard: average accuracy across all mocks",dilr:"September DILR scorecard: attempts + accuracy + best 3 set types confirmed",varc:"September VARC scorecard: RC accuracy + TITA attempt rate + net score",note:"SEPTEMBER COMPLETE! 9 mocks done. Error patterns identified. Strategy 80% locked. Ready for October."},
+]},
+{w:11,p:"October",d:"Oct 1–7",t:"Peak Intensity",days:[
+{n:62,date:"Oct 1 (Thu)",...mk(10,"Full Mock #10 — double digits! October mock marathon: mock every 1–2 days.")},
+{n:63,date:"Oct 2 (Fri)",...an(10,"Fix top 3 error patterns only. 2 hours max on analysis. Then move forward.")},
+{n:64,date:"Oct 3 (Sat)",qa:"40 QA — error pattern problems ONLY (not random). Fix known weaknesses.",dilr:"3 complex sets",varc:"1 article + 5 RC passages",note:"OCTOBER RULE: No new topics. Only fix known weaknesses. Only drill locked strategy."},
+{n:65,date:"Oct 4 (Sun)",...mk(11)},
+{n:66,date:"Oct 5 (Mon)",...an(11,"Lock section start order: which section first in exam? Based on your performance patterns.")},
+{n:67,date:"Oct 6 (Tue)",...mk(12)},
+{n:68,date:"Oct 7 (Wed)",...an(12,"TITA attempt rate audit: total TITA Qs available vs attempted. 100% attempt rate is the goal.")},
+]},
+{w:12,p:"October",d:"Oct 8–14",t:"99+ Percentile Push",days:[
+{n:69,date:"Oct 8 (Thu)",...mk(13)},
+{n:70,date:"Oct 9 (Fri)",...an(13,"Compare Mock #1 score vs Mock #13 score. That gap is your work made visible.")},
+{n:71,date:"Oct 10 (Sat)",qa:"30 QA — your single weakest sub-topic ONLY",dilr:"3 complex sets — your weakest set type",varc:"1 article + 4 RC passages",note:"October: targeted weakness drilling > volume drilling. Quality of fix over number of problems."},
+{n:72,date:"Oct 11 (Sun)",...mk(14)},
+{n:73,date:"Oct 12 (Mon)",...an(14,"Finalize QA attempt strategy: exactly which 18–20 Qs to attempt. Skip instinct = locked.")},
+{n:74,date:"Oct 13 (Tue)",...mk(15)},
+{n:75,date:"Oct 14 (Wed)",...an(15,"Energy management: intense but sustainable. 6.5 weeks remain. Pace yourself carefully.")},
+]},
+{w:13,p:"October",d:"Oct 15–21",t:"Strategy Lock",days:[
+{n:76,date:"Oct 15 (Thu)",...mk(16)},
+{n:77,date:"Oct 16 (Fri)",...an(16,"By now: 99+ %ile in at least 1–2 mocks. If not, identify the specific barrier today.")},
+{n:78,date:"Oct 17 (Sat)",qa:"Formula sheet revision only (30 min). No new problems.",dilr:"3 sets — your 3 best-performing types only",varc:"4 RC passages at full speed",note:"Formula sheet: flip through everything. Spot gaps. Fix with Anki immediately. 30 min = huge ROI."},
+{n:79,date:"Oct 18 (Sun)",...mk(17)},
+{n:80,date:"Oct 19 (Mon)",...an(17,"Inference question audit: 20 targeted questions. Inference = #1 most-missed RC question type.")},
+{n:81,date:"Oct 20 (Tue)",...mk(18)},
+{n:82,date:"Oct 21 (Wed)",...an(18,"TITA accuracy: Para Summary 75%+? Para Jumbles 60%+? Odd Sentence 70%+?")},
+]},
+{w:14,p:"October",d:"Oct 22–28",t:"Final Mock Block",days:[
+{n:83,date:"Oct 22 (Thu)",...mk(19)},
+{n:84,date:"Oct 23 (Fri)",type:"review",qa:"Mock #19 analysis — QA attempt strategy confirmed?",dilr:"DILR set selection framework — written down and finalized?",varc:"Review your 5 worst RC passages from October — find the pattern",note:"MILESTONE: 99+ %ile in 2+ mocks? If yes, strategy works. If no, find the specific blocker TODAY."},
+{n:85,date:"Oct 24 (Sat)",qa:"Formula revision (30 min) + 10 easy arithmetic (confidence building)",dilr:"2 DILR sets — your best types (confidence building)",varc:"4 RC passages + all VA types",note:"Confidence building: do what you're already good at. Momentum is a real performance variable."},
+{n:86,date:"Oct 25 (Sun)",...mk(20,"Full Mock #20. Twenty mocks. You are battle-hardened.")},
+{n:87,date:"Oct 26 (Mon)",...an(20,"FINAL STRATEGY SESSION: Write on paper — section order, time targets, TITA policy, skip rule.")},
+{n:88,date:"Oct 27 (Tue)",...mk(21)},
+{n:89,date:"Oct 28 (Wed)",...an(21,"Strategy LOCKED. Final mocks are about perfect execution. Nothing new from here.")},
+]},
+{w:15,p:"October",d:"Oct 29–31",t:"October Wrap",days:[
+{n:90,date:"Oct 29 (Thu)",...mk(22)},
+{n:91,date:"Oct 30 (Fri)",...an(22,"October review: how many 99+ mocks? Peak score? Average score? November priorities?")},
+{n:92,date:"Oct 31 (Sat)",type:"review",qa:"Light revision only. Rest. Plan November.",dilr:"1 easy set — familiar type",varc:"1 article + 2 RCs (relaxed)",note:"OCTOBER COMPLETE! 22 full mocks done. Peak performance built. November = maintain + sharpen + taper."},
+]},
+{w:16,p:"November",d:"Nov 1–7",t:"Maintain Peak",days:[
+{n:93,date:"Nov 1 (Sun)",...mk(23,"November: 1 mock every ~3 days. Intensity reduces, sharpness maintained.")},
+{n:94,date:"Nov 2 (Mon)",...an(23,"Light analysis only: 1 insight per section. Trust what you've built over 3 months.")},
+{n:95,date:"Nov 3 (Tue)",qa:"Error-pattern QA — 30 problems from known weak spots",dilr:"2 DILR sets — your best 2 types",varc:"1 article + 3 RC passages",note:"November drilling = only known weaknesses and best set types. Nothing new, ever."},
+{n:96,date:"Nov 4 (Wed)",...mk(24,"Full Mock #24. Confidence builder. You've earned good scores here.")},
+{n:97,date:"Nov 5 (Thu)",...an(24,"Light analysis. Top 2 insights only. Your patterns are known. Trust them.")},
+{n:98,date:"Nov 6 (Fri)",qa:"Arithmetic shortcuts revision (30 min) + 10 problems from your strongest topic",dilr:"2 sets — favourite types",varc:"1 article + 2 RC passages (relaxed, engaged reading)",note:"Do things that remind you you're good at this. Confidence is a real performance multiplier."},
+{n:99,date:"Nov 7 (Sat)",type:"review",qa:"Very light revision. Zero pressure.",dilr:"Nothing today",varc:"1 article — read for enjoyment",note:"REST IS STRATEGY. 8 hours of sleep. Your brain consolidates learning during sleep. Honour this."},
+]},
+{w:17,p:"November",d:"Nov 8–14",t:"Sharpen",days:[
+{n:100,date:"Nov 8 (Sun)",...mk(25,"Full Mock #25. DAY 100 OF PREP! 100 days of showing up. Look how far you've come.")},
+{n:101,date:"Nov 9 (Mon)",...an(25,"Day 100: compare Mock #1 vs Mock #25. That gap is your work made visible.")},
+{n:102,date:"Nov 10 (Tue)",qa:"30 QA — weakest sub-topic, light drilling",dilr:"2 sets — best types",varc:"1 article + 3 RC passages",note:"Keep the engine warm. Moderate volume, high focus. No burnout allowed this close."},
+{n:103,date:"Nov 11 (Wed)",...mk(26)},
+{n:104,date:"Nov 12 (Thu)",...an(26,"Refine strategy card: section order, time targets, TITA policy, skip rule — v2 written down.")},
+{n:105,date:"Nov 13 (Fri)",qa:"Formula sheet + 10 easy problems (confidence)",dilr:"2 sets — best types",varc:"1 article + 2 RC passages",note:"Consistency now beats intensity. Every session should end with confidence, not exhaustion."},
+{n:106,date:"Nov 14 (Sat)",type:"review",qa:"Week check: accuracy holding at peak levels?",dilr:"1 light set + set selection mental rehearsal",varc:"2 RC passages, relaxed",note:"15 days to exam. Two mocks left. The work is nearly done — now protect your sharpness and sleep."},
+]},
+{w:18,p:"November",d:"Nov 15–21",t:"Final Mocks",days:[
+{n:107,date:"Nov 15 (Sun)",...mk(27,"Full Mock #27. Second-to-last full mock. Calm, sharp execution.")},
+{n:108,date:"Nov 16 (Mon)",...an(27,"Brief analysis: 1 thing per section to confirm for exam day. Add it to your strategy card.")},
+{n:109,date:"Nov 17 (Tue)",qa:"Light revision: formula sheet (30 min)",dilr:"1 easy set — confidence only",varc:"2 RC passages — easy, relaxed",note:"You are ready. The work is done. This week: stay warm, build confidence."},
+{n:110,date:"Nov 18 (Wed)",...mk(28,"Full Mock #28 — THE FINAL FULL MOCK. After this: no more full mocks.")},
+{n:111,date:"Nov 19 (Thu)",type:"analysis",qa:"Final mock analysis (30 min max). Confirm QA strategy: skip threshold, TITA policy.",dilr:"Confirm DILR set selection plan for exam day (write it down).",varc:"Confirm RC time-per-passage + VA attempt policy (write it down).",note:"Write your FINAL strategy card: section order · time targets · TITA policy · skip rule. Carry this to exam day."},
+{n:112,date:"Nov 20 (Fri)",qa:"Formula sheet one final pass (30 min).",dilr:"1 easy set — familiar type",varc:"1 article — something you enjoy",note:"Taper begins: brain must be fresh on exam day, not exhausted. No intense practice from here."},
+{n:113,date:"Nov 21 (Sat)",type:"review",qa:"Light: 10 easy problems, strongest topic only",dilr:"Strategy card review only",varc:"2 easy RC passages",note:"28 full mocks done. Strategy locked. The final week is about rest, rhythm, and confidence."},
+]},
+{w:19,p:"November",d:"Nov 22–29",t:"Taper & Exam Week",days:[
+{n:114,date:"Nov 22 (Sun)",qa:"Formula skim (20 min)",dilr:"1 easy set — favourite type",varc:"2 easy RC passages, relaxed",note:"Exam week begins. Everything light. Sleep schedule: match exam-day wake time from today."},
+{n:115,date:"Nov 23 (Mon)",qa:"10 problems — strongest QA topic (confidence only)",dilr:"Nothing today",varc:"1 article for enjoyment",note:"Read something interesting, not just prep material. Keep brain engaged, not anxious."},
+{n:116,date:"Nov 24 (Tue)",qa:"Strategy card read-through",dilr:"1 easy set — confidence",varc:"1 article + 1 easy RC",note:"Visualize exam day: reach center, settle in, section order, first 5 minutes of each section."},
+{n:117,date:"Nov 25 (Wed)",qa:"Formula sheet final look (20 min). Then put it away.",dilr:"Nothing today",varc:"1 article — something you enjoy",note:"The sheet is in your head now. Trust it. No more new problems from here."},
+{n:118,date:"Nov 26 (Thu)",qa:"Nothing today",dilr:"Nothing today",varc:"1 article for enjoyment",note:"Full rest day. Walk, music, good food, early sleep. Recovery IS preparation."},
+{n:119,date:"Nov 27 (Fri)",qa:"Read your own notes one last time (20 min). Then CLOSE THEM.",dilr:"Nothing today",varc:"1 article for enjoyment",note:"Prepare kit: Admit card, ID, pencils, water, watch. Confirm center route and travel time."},
+{n:120,date:"Nov 28 (Sat)",type:"review",qa:"Read strategy card only. Done.",dilr:"Light walk. Zero prep.",varc:"Relax. Read something light.",note:"Sleep by 10 PM. Everything is packed. You are READY. Tomorrow you execute."},
+{n:121,date:"Nov 29 (Sun)",type:"mock",qa:"CAT 2026 — EXAM DAY",dilr:"CAT 2026 — EXAM DAY",varc:"CAT 2026 — EXAM DAY",note:"121 days. 28 full mocks. Thousands of problems. More prepared than 99% of test-takers. Trust the process. Go get it."},
+]},
+];
+
+let ap="August", openW=new Set([1]);
+
+function cdntn(){
+  const now=new Date(), aug1=new Date(2026,7,1), exam=new Date(2026,10,29);
+  const toStart=Math.ceil((aug1-now)/(1000*60*60*24));
+  const el=document.getElementById("cntdn"), ll=document.getElementById("cntdn-lbl");
+  if(toStart>0){el.textContent=toStart;ll.textContent="Days to Aug 1";}
+  else {
+    const toExam=Math.ceil((exam-now)/(1000*60*60*24));
+    if(toExam>0){
+      const day=Math.abs(toStart)+1;
+      el.textContent="Day "+day;ll.textContent=toExam+" days to exam";
+    } else if(toExam===0){el.textContent="EXAM";ll.textContent="Today. Go get it.";}
+    else {el.textContent="Done";ll.textContent="Plan complete";}
+  }
+}
+
+function renderTabs(){
+  const el=document.getElementById("tabs");
+  el.innerHTML=Object.keys(PH).map(p=>{
+    const ph=PH[p], on=ap===p;
+    return `<button class="ptab${on?" on":""}" style="${on?`background:${ph.c};color:#fff`:`color:var(--text-secondary)`}" onclick="setPhase('${p}')">${p}</button>`;
+  }).join("");
+}
+
+function renderPhaseCard(){
+  const ph=PH[ap];
+  const wks=WEEKS.filter(w=>w.p===ap);
+  const days=wks.reduce((s,w)=>s+w.days.length,0);
+  const mocks=wks.flatMap(w=>w.days).filter(d=>d.type==="mock").length;
+  document.getElementById("pcard").innerHTML=`
+  <div class="pcard" style="background:${ph.bg};border-color:${ph.bd}">
+    <div class="pcard-row">
+      <div>
+        <div class="ptitle" style="color:${ph.c}">${ap}: ${ph.t}</div>
+        <div class="psub">${ph.h}</div>
+      </div>
+      <div style="text-align:right;font-size:12px;color:${ph.c};font-weight:500">${days} days · ${mocks} full mock${mocks!==1?"s":""}</div>
+    </div>
+  </div>`;
+}
+
+function renderWeeks(){
+  const ph=PH[ap];
+  const wks=WEEKS.filter(w=>w.p===ap);
+  document.getElementById("weeks").innerHTML=wks.map(wk=>{
+    const isOpen=openW.has(wk.w);
+    const mocks=wk.days.filter(d=>d.type==="mock").length;
+    const daysHtml=isOpen?wk.days.map(d=>{
+      const ts=TS[d.type]||{bg:"var(--surface-1)",bd:"var(--border)",tag:null};
+      const tagHtml=d.type?`<span class="dtag" style="background:${ts.tc};color:#fff">${ts.tag}</span>`:"";
+      return `<div class="dc" style="background:${ts.bg};border-color:${ts.bd}">
+        <div class="dtop">
+          <span class="dnum">Day ${d.n}</span>
+          <span class="ddate">${d.date}</span>
+          ${tagHtml}
+        </div>
+        <div class="dgrid">
+          <div class="ds"><div class="dsl" style="color:#16a34a">QA</div><div class="dst">${d.qa}</div></div>
+          <div class="ds"><div class="dsl" style="color:#ca8a04">DILR</div><div class="dst">${d.dilr}</div></div>
+          <div class="ds"><div class="dsl" style="color:#dc2626">VARC</div><div class="dst">${d.varc}</div></div>
+        </div>
+        ${d.note?`<div class="dnote">${d.note}</div>`:""}
+      </div>`;
+    }).join(""):"";
+    return `<div class="week">
+      <button class="whdr" onclick="togW(${wk.w})">
+        <div style="display:flex;align-items:center">
+          <div class="wnum" style="background:${ph.c}">W${wk.w}</div>
+          <div class="winfo">
+            <div class="wtitle">${wk.d} — ${wk.t}</div>
+            <div class="wsub">${wk.days.length} days${mocks>0?" · "+mocks+" mock"+(mocks>1?"s":""):""}</div>
+          </div>
+        </div>
+        <i class="ti ti-chevron-${isOpen?"up":"down"}" aria-hidden="true" style="color:var(--text-muted);font-size:16px"></i>
+      </button>
+      ${isOpen?`<div class="wbody">${daysHtml}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+function render(){renderTabs();renderPhaseCard();renderWeeks();}
+window.setPhase=p=>{ap=p;openW=new Set();render();};
+window.togW=w=>{openW.has(w)?openW.delete(w):openW.add(w);renderWeeks();};
+cdntn();render();
+</script>
