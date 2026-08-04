@@ -3,84 +3,50 @@ import { cookies } from "next/headers";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Server-side Supabase client for use in Server Components and Route Handlers.
- * Reads the session cookie set by `@supabase/ssr` on the browser side and
- * forwards it to Supabase so RLS sees the authenticated user.
- *
- * Use this for all authenticated reads/writes — it respects RLS.
+ * Server-side Supabase client.
+ * Uses the service role key so RLS is bypassed — auth is not required.
+ * Safe for personal single-user deployment where login is disabled.
  */
 export async function createClient(): Promise<SupabaseClient> {
-  const cookieStore = await cookies();
-
-  return createServerClient(
+  // Service role key bypasses RLS — no session needed.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { createClient: createServiceRoleClient } = require("@supabase/supabase-js");
+  return createServiceRoleClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            );
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // Safe to ignore — middleware will refresh the session.
-          }
-        },
-      },
-    },
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
 }
 
 /**
- * Service-role client — bypasses RLS.
- * ONLY for use in `app/api/cron/*` routes, gated by `CRON_SECRET`.
- * Never expose this to the client.
+ * Service-role client — same as createClient() now, kept for API route compatibility.
  */
 export function createServiceClient(): SupabaseClient {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
   }
-  // Lazy-import to keep it out of any client bundle
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { createClient: createServiceRoleClient } = require("@supabase/supabase-js");
   return createServiceRoleClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    },
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
 }
 
 /**
- * Get the authenticated user's email, server-side.
- * Used to enforce the `ALLOWED_USER_EMAIL` allowlist on every request.
- *
- * Returns `null` if no session, throws if session exists but email is not allowlisted.
+ * Get the owner user identity from environment variables.
+ * No Supabase auth session required — the app is single-user, no login needed.
  */
 export async function getAllowlistedUser(): Promise<{ id: string; email: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const id = process.env.TARGET_USER_ID;
+  const email = process.env.ALLOWED_USER_EMAIL;
 
-  if (!user || !user.email) {
-    throw new AuthError("NO_SESSION", "Not authenticated");
+  if (!id || !email) {
+    throw new AuthError("NO_CONFIG", "TARGET_USER_ID or ALLOWED_USER_EMAIL is not set in environment");
   }
 
-  const allowed = process.env.ALLOWED_USER_EMAIL;
-  if (allowed && user.email.toLowerCase() !== allowed.toLowerCase()) {
-    throw new AuthError("FORBIDDEN", `${user.email} is not on the allowlist`);
-  }
-
-  return { id: user.id, email: user.email };
+  return { id, email };
 }
 
 export class AuthError extends Error {

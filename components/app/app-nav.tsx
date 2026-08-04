@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, MessageSquare, FileText, Layers, GitFork, Newspaper, TrendingUp, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Calendar, MessageSquare, FileText, Layers, GitFork, Newspaper, TrendingUp, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 /**
  * AppNav — persistent navigation for the authenticated shell.
@@ -28,13 +26,6 @@ const navItems = [
 
 export function AppNav({ email }: { email: string }) {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
 
   return (
     <>
@@ -67,17 +58,8 @@ export function AppNav({ email }: { email: string }) {
             );
           })}
         </nav>
-        <div className="border-t border-hairline p-3">
-          <div className="px-3 py-2 mb-1">
-            <p className="text-caption text-ink-faint truncate">{email}</p>
-          </div>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-md text-body-sm text-ink-secondary hover:bg-canvas-soft/60 hover:text-ink w-full transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </button>
+        <div className="border-t border-hairline p-3 px-5 py-3">
+          <p className="text-caption text-ink-faint truncate">{email}</p>
         </div>
       </aside>
 
