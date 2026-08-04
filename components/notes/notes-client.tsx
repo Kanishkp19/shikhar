@@ -267,13 +267,13 @@ export function NotesClient({ initialNotes, initialError }: Props) {
         </div>
 
         {/* Search Bar */}
-        <div className="relative min-w-[220px]">
+        <div className="relative flex-1 min-w-0 w-full sm:w-auto sm:min-w-[220px]">
           <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search notes..."
-            className="pl-8 text-body-sm h-8"
+            className="pl-8 text-body-sm h-8 w-full"
           />
         </div>
       </div>

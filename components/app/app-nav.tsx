@@ -82,8 +82,8 @@ export function AppNav({ email }: { email: string }) {
       </aside>
 
       {/* Mobile bottom tab bar */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-hairline overflow-x-auto">
-        <div className="flex items-center justify-between min-w-max px-2">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-hairline">
+        <div className="flex items-stretch w-full">
           {navItems.map((item) => {
             const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             const Icon = item.icon;
@@ -92,12 +92,12 @@ export function AppNav({ email }: { email: string }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 py-2 px-3 text-eyebrow shrink-0",
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 min-w-0",
                   active ? "text-primary font-medium" : "text-ink-faint",
                 )}
               >
-                <Icon className="h-4 w-4" />
-                <span className="text-[10px] leading-tight">{item.label}</span>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="text-[9px] leading-tight truncate w-full text-center px-0.5">{item.label}</span>
               </Link>
             );
           })}

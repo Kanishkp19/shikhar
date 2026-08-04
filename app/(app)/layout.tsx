@@ -39,7 +39,7 @@ export default async function AppLayout({
         <div className="min-h-screen bg-canvas-soft flex flex-col">
           <AppNav email={user.email!} />
           <PushPermissionBanner />
-          <main className="md:pl-60 flex-1 pb-20 md:pb-8">
+          <main className="md:pl-60 flex-1 pb-28 md:pb-8">
             <div className="max-w-6xl mx-auto p-4 md:p-8">{children}</div>
           </main>
           <div className="md:pl-60">

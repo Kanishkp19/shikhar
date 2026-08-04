@@ -129,7 +129,7 @@ export function SessionTimerBar() {
           : "bg-white text-[var(--color-ink)] border-[var(--color-hairline)] shadow-[var(--shadow-1)]"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
         {/* Left: Active Topic Info */}
         <div className="flex items-center gap-3">
           <span
@@ -154,7 +154,7 @@ export function SessionTimerBar() {
             />
             {activeTopic.section}
           </span>
-          <span className="font-semibold text-sm truncate max-w-xs sm:max-w-md">
+          <span className="font-semibold text-xs sm:text-sm truncate max-w-[120px] xs:max-w-[160px] sm:max-w-xs md:max-w-md">
             {activeTopic.title}
           </span>
         </div>
@@ -162,7 +162,7 @@ export function SessionTimerBar() {
         {/* Middle: Live Timer */}
         <div className="flex items-center gap-2">
           <span className="text-xs uppercase tracking-wider opacity-75 font-medium">Session:</span>
-          <span className="font-mono text-xl font-bold tracking-tight" aria-live="polite">
+          <span className="font-mono text-base sm:text-xl font-bold tracking-tight" aria-live="polite">
             {formatTime(elapsed)}
           </span>
         </div>

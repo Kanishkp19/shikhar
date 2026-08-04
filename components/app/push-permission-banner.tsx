@@ -42,19 +42,19 @@ export function PushPermissionBanner() {
 
   return (
     <div className="bg-surface border-b border-hairline">
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center gap-3">
-        <div className="h-9 w-9 rounded-md bg-canvas-soft flex items-center justify-center text-primary shrink-0">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-2.5 flex items-center gap-3">
+        <div className="h-8 w-8 rounded-md bg-canvas-soft flex items-center justify-center text-primary shrink-0">
           <Bell className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-body-sm text-ink font-medium">
+          <p className="text-body-sm text-ink font-medium leading-snug">
             Enable push notifications for task-time reminders
           </p>
-          <p className="text-caption text-ink-muted">
-            We&apos;ll ping you when a scheduled task&apos;s time arrives and warn you if you haven&apos;t started by evening.
+          <p className="text-caption text-ink-muted hidden sm:block">
+            We&apos;ll ping you when a scheduled task&apos;s time arrives.
           </p>
         </div>
-        <Button onClick={requestPermission} size="sm" className="shrink-0">
+        <Button onClick={requestPermission} size="sm" className="shrink-0 text-xs">
           Enable
         </Button>
         <button

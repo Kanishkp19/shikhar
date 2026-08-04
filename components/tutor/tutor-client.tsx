@@ -68,7 +68,7 @@ export function TutorClient({ initialMessages, todayDate, todaysTopics }: Props)
         </p>
       </header>
 
-      <Card className="flex flex-col h-[calc(100vh-220px)] min-h-[400px] overflow-hidden">
+      <Card className="flex flex-col h-[calc(100vh-300px)] md:h-[calc(100vh-220px)] min-h-[360px] overflow-hidden">
         <div className="border-b border-hairline px-4 py-2 bg-canvas-soft/50">
           <p className="text-eyebrow text-ink-muted uppercase tracking-wide mb-1">
             Today's context

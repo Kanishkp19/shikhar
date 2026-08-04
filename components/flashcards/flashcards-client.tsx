@@ -256,7 +256,7 @@ export function FlashcardsClient({ initialDecks }: Props) {
               </div>
 
               {/* Confidence Rating Buttons (Shown on Flip) */}
-              <div className="flex items-center justify-between gap-2 pt-2 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="utility"
@@ -283,7 +283,7 @@ export function FlashcardsClient({ initialDecks }: Props) {
                 </div>
 
                 {isFlipped && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button
                       size="sm"
                       className="bg-red-500 hover:bg-red-600 text-white text-xs h-8"
