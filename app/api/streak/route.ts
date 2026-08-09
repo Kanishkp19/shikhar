@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import { todayISODate } from "@/lib/utils";
 import type { ApiError, ApiSuccess, StreakInfo } from "@/lib/types";
 
@@ -8,18 +8,7 @@ import type { ApiError, ApiSuccess, StreakInfo } from "@/lib/types";
  * Pulls today's streak row + recomputes today's progress from tasks table.
  */
 export async function GET() {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const today = todayISODate();
   const supabase = await createClient();

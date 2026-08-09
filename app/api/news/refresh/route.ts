@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, createServiceClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createServiceClient, getAllowlistedUser } from "@/lib/supabase/server";
 import { summarizeNews } from "@/lib/llm/openrouter";
 import { mondayOfWeek } from "@/lib/utils";
 import { fetchAndFormatHeadlines } from "@/lib/news/scraper";
@@ -41,18 +41,7 @@ function checkRateLimit(userId: string): boolean {
 
 export async function POST(_request: Request) {
   try {
-    let user;
-    try {
-      user = await getAllowlistedUser();
-    } catch (e) {
-      if (e instanceof AuthError) {
-        return NextResponse.json<ApiError>(
-          { error: { code: e.code, message: e.message } },
-          { status: e.code === "FORBIDDEN" ? 403 : 401 },
-        );
-      }
-      throw e;
-    }
+    const user = await getAllowlistedUser();
 
     // Rate limit
     if (!checkRateLimit(user.id)) {

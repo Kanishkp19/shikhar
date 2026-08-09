@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import { tutorMessageSchema, rateLimit } from "@/lib/validation/schemas";
 import { tutorChat } from "@/lib/llm/groq";
 import { buildTutorSystemPrompt } from "@/lib/llm/prompts";
@@ -15,18 +15,7 @@ import type { ApiError, ApiSuccess, TutorMessage } from "@/lib/types";
  * On 429/5xx: returns { error: { code: "LLM_BUSY" } }.
  */
 export async function GET(request: Request) {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const url = new URL(request.url);
   const threadDate = url.searchParams.get("threadDate") ?? todayISODate();
@@ -50,18 +39,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   // Rate limit: 30 tutor messages per hour per user
   if (!rateLimit(`tutor:${user.id}`, 30, 60 * 60 * 1000)) {

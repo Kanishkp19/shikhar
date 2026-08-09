@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import { pushSubscribeSchema } from "@/lib/validation/schemas";
 import type { ApiError, ApiSuccess } from "@/lib/types";
 
@@ -11,18 +11,7 @@ import type { ApiError, ApiSuccess } from "@/lib/types";
  * Per TRD: stored per user_id; multiple devices = multiple rows.
  */
 export async function POST(request: Request) {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const body = await request.json().catch(() => ({}));
   const parsed = pushSubscribeSchema.safeParse(body);
@@ -63,18 +52,7 @@ export async function POST(request: Request) {
  * Removes a subscription (e.g. user turned off notifications).
  */
 export async function DELETE(request: Request) {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const url = new URL(request.url);
   const endpoint = url.searchParams.get("endpoint");

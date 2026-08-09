@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import { generateFlashcardDeck, generateFlashcardsFromNotes } from "@/lib/llm/omniroute";
 import { z } from "zod";
 import type { ApiError, ApiSuccess, FlashcardDeck } from "@/lib/types";
@@ -14,18 +14,7 @@ const schema = z.object({
  */
 export async function POST(request: Request) {
   try {
-    let user;
-    try {
-      user = await getAllowlistedUser();
-    } catch (e) {
-      if (e instanceof AuthError) {
-        return NextResponse.json<ApiError>(
-          { error: { code: e.code, message: e.message } },
-          { status: e.code === "FORBIDDEN" ? 403 : 401 },
-        );
-      }
-      throw e;
-    }
+    const user = await getAllowlistedUser();
 
     const body = await request.json().catch(() => ({}));
     const parsed = schema.safeParse(body);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import { mockScoreCreateSchema } from "@/lib/validation/schemas";
 import type { ApiError, ApiSuccess, MockScore } from "@/lib/types";
 
@@ -8,18 +8,7 @@ import type { ApiError, ApiSuccess, MockScore } from "@/lib/types";
  * POST /api/mocks — log a new mock score with sectional breakdown.
  */
 export async function GET() {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -39,18 +28,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const body = await request.json().catch(() => ({}));
   const parsed = mockScoreCreateSchema.safeParse(body);

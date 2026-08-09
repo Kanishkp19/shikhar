@@ -1,23 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import type { ApiError, ApiSuccess, FlashcardDeck } from "@/lib/types";
 
 /**
  * GET /api/flashcards — list all flashcard decks for the user.
  */
 export async function GET() {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const supabase = await createClient();
   const { data: decks, error } = await supabase

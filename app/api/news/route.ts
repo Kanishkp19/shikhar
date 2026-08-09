@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import type { ApiError, ApiSuccess, NewsItem } from "@/lib/types";
 
 /**
@@ -7,21 +7,7 @@ import type { ApiError, ApiSuccess, NewsItem } from "@/lib/types";
  * Per TRD: cursor-paginated at 20 items.
  */
 export async function GET(request: Request) {
-  let user;
-  try {
-    // Even though news is global, we still require auth — no anonymous access.
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
-
-  void user; // user is authenticated; news table is global (no user_id)
+  await getAllowlistedUser();
 
   const url = new URL(request.url);
   const cursor = url.searchParams.get("cursor");

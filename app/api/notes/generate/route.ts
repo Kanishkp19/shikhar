@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import { noteGenerateSchema, rateLimit } from "@/lib/validation/schemas";
 import { generateNotes } from "@/lib/llm/openrouter";
 import { generateMindMapFromNotes, generateFlashcardsFromNotes } from "@/lib/llm/omniroute";
@@ -22,18 +22,7 @@ export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
-    let user;
-    try {
-      user = await getAllowlistedUser();
-    } catch (e) {
-      if (e instanceof AuthError) {
-        return NextResponse.json<ApiError>(
-          { error: { code: e.code, message: e.message } },
-          { status: e.code === "FORBIDDEN" ? 403 : 401 }
-        );
-      }
-      throw e;
-    }
+    const user = await getAllowlistedUser();
 
     // Rate limit: 10 notes per hour per user
     if (!rateLimit(`notes:${user.id}`, 10, 60 * 60 * 1000)) {
