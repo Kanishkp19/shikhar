@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import type { ApiError, ApiSuccess } from "@/lib/types";
 
 export interface PlanDayItem {
@@ -16,17 +15,7 @@ export interface PlanDayItem {
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 }
-      );
-    }
-    throw e;
-  }
+  await getAllowlistedUser();
 
   const { searchParams } = new URL(request.url);
   const section = searchParams.get("section");

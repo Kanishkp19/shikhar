@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import { todayISODate } from "@/lib/utils";
 import type { ApiError, ApiSuccess, Task } from "@/lib/types";
 
@@ -10,18 +9,7 @@ import type { ApiError, ApiSuccess, Task } from "@/lib/types";
  * Sorted by scheduled_time (nulls last).
  */
 export async function GET(request: Request) {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const url = new URL(request.url);
   const date = url.searchParams.get("date") ?? todayISODate();
@@ -50,18 +38,7 @@ export async function GET(request: Request) {
  * Body: { taskIds: string[], completed: boolean }
  */
 export async function PATCH(request: Request) {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const body = await request.json().catch(() => ({}));
   const { bulkTaskToggleSchema } = await import("@/lib/validation/schemas");

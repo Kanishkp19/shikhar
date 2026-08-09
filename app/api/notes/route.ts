@@ -1,24 +1,13 @@
 import { NextResponse } from "next/server";
-import { createClient, getAllowlistedUser, AuthError } from "@/lib/supabase/server";
+import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import type { ApiError, ApiSuccess, Note } from "@/lib/types";
 
 /**
- * GET /api/notes — list user's notes, newest first, paginated at 20 items.
- * Per TRD: cursor-based created_at pagination.
+ * GET /api/notes
+ * Returns note cards list with cursor-based pagination.
  */
 export async function GET(request: Request) {
-  let user;
-  try {
-    user = await getAllowlistedUser();
-  } catch (e) {
-    if (e instanceof AuthError) {
-      return NextResponse.json<ApiError>(
-        { error: { code: e.code, message: e.message } },
-        { status: e.code === "FORBIDDEN" ? 403 : 401 },
-      );
-    }
-    throw e;
-  }
+  const user = await getAllowlistedUser();
 
   const url = new URL(request.url);
   const cursor = url.searchParams.get("cursor");
