@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from "next/server";
 import { createClient, getAllowlistedUser } from "@/lib/supabase/server";
 import type { ApiError, ApiSuccess } from "@/lib/types";
 
