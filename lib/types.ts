@@ -154,3 +154,68 @@ export interface MindMap {
   mermaidCode: string;
   createdAt: string;
 }
+
+// ──────────────────────────────────────────────────────────────
+// Handwritten Notes
+// ──────────────────────────────────────────────────────────────
+
+export interface HandwrittenNoteConcept {
+  heading: string;
+  body: string;
+  highlight?: string;
+}
+
+export interface HandwrittenNoteFormula {
+  label: string;
+  formula: string;
+  subtext?: string;
+}
+
+export interface HandwrittenNoteExample {
+  q: string;
+  method: string;
+  answer: string;
+}
+
+export interface HandwrittenNoteTheorem {
+  num?: number;
+  title: string;
+  body: string;
+  formula?: string;
+  diagramType?: "triangle_basic" | "triangle_exterior" | "pythagoras" | "bisector" | "proportionality" | "circle" | "coordinate" | "none";
+}
+
+export interface HandwrittenNotePage {
+  pageNo?: number;
+  dateStr?: string;
+  subjectTag?: string;
+  basicsSummary?: string;
+  basics: HandwrittenNoteConcept[];
+  notationBox?: string[];
+  typesBox?: { name: string; desc: string }[];
+  theorems?: HandwrittenNoteTheorem[];
+  formulas: HandwrittenNoteFormula[];
+  results?: string[];
+  shortcuts: string[];
+  traps: string[];
+  examples: HandwrittenNoteExample[];
+  memory?: string;
+  revision: string[];
+  motivationalQuote?: string;
+  footerBanner?: string;
+}
+
+export interface HandwrittenNoteContent {
+  title: string;
+  subtitle: string;
+  pages: HandwrittenNotePage[];
+}
+
+export interface HandwrittenNote {
+  id: string;
+  userId: string;
+  topic: string;
+  section: string;
+  contentJson: HandwrittenNoteContent;
+  createdAt: string;
+}

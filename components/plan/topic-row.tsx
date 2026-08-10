@@ -6,7 +6,7 @@ import { Section } from "@/lib/types";
 import { useActiveTopicStore } from "@/lib/store/active-topic-store";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/toaster";
-import { Clock, CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
+import { Clock, CheckCircle2, Sparkles, MessageSquare, PenLine } from "lucide-react";
 import Link from "next/link";
 
 interface TopicRowProps {
@@ -163,6 +163,13 @@ export function TopicRow({
           title="Generate Notes"
         >
           <Sparkles className="w-4 h-4" />
+        </Link>
+        <Link
+          href={`/handwritten-notes?topic=${encodeURIComponent(title)}&section=${encodeURIComponent(section)}&generate=1`}
+          className="p-1.5 rounded-full text-[var(--color-ink-muted)] hover:bg-black/5 hover:text-[var(--color-primary)] transition-all"
+          title="Generate Handwritten Notes"
+        >
+          <PenLine className="w-4 h-4" />
         </Link>
 
         {isDone ? (

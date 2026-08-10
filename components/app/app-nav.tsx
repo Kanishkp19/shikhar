@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, MessageSquare, FileText, Layers, GitFork, Newspaper, TrendingUp, Settings } from "lucide-react";
+import { LayoutDashboard, Calendar, MessageSquare, FileText, Layers, GitFork, Newspaper, TrendingUp, Settings, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -19,6 +19,7 @@ const navItems = [
   { href: "/notes", label: "Notes", icon: FileText },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
   { href: "/mindmaps", label: "Mind Maps", icon: GitFork },
+  { href: "/handwritten-notes", label: "HW Notes", icon: PenLine },
   { href: "/news", label: "News", icon: Newspaper },
   { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/settings", label: "Settings", icon: Settings },

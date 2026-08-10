@@ -8,7 +8,7 @@
  * Fallback: If local OmniRoute server is offline, automatically falls back to Groq (sub-5s) / Gemini direct.
  */
 
-import type { NoteSection, DiagramType } from "@/lib/types";
+import type { NoteSection, DiagramType, HandwrittenNoteContent } from "@/lib/types";
 
 const DEFAULT_OMNIROUTE_URL = "http://localhost:20128/v1/chat/completions";
 
@@ -352,5 +352,162 @@ Format: Return ONLY a valid JSON array of objects with NO markdown:
     return { ok: true, data, provider };
   } catch (err) {
     return { ok: false, code: "GENERATION_FAILED", message: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Handwritten Notes Generation
+// ──────────────────────────────────────────────────────────────
+
+const HW_NOTES_JSON_SCHEMA = `{
+  "title": "TOPIC NAME IN CAPS",
+  "subtitle": "CAT Quant / DILR / VARC — Subtopic",
+  "pages": [
+    {
+      "basicsSummary": "1-2 sentence core definition or summary of the topic",
+      "basics": [
+        { "heading": "Sum of angles", "body": "180°" },
+        { "heading": "Triangle inequality", "body": "a + b > c, b + c > a, c + a > b" }
+      ],
+      "notationBox": [
+        "Side opposite ∠A → a",
+        "Side opposite ∠B → b",
+        "Side opposite ∠C → c"
+      ],
+      "typesBox": [
+        { "name": "Equilateral", "desc": "All sides equal (60°,60°,60°)" },
+        { "name": "Isosceles", "desc": "Two sides equal" },
+        { "name": "Right angled", "desc": "One angle = 90°" }
+      ],
+      "theorems": [
+        {
+          "num": 1,
+          "title": "Exterior Angle Theorem",
+          "body": "Exterior angle = Sum of two interior opposite angles.",
+          "diagramType": "triangle_exterior"
+        },
+        {
+          "num": 2,
+          "title": "Pythagoras Theorem (Right Δ)",
+          "body": "(Hypotenuse)² = (Base)² + (Perpendicular)², i.e., c² = a² + b²",
+          "diagramType": "pythagoras"
+        },
+        {
+          "num": 3,
+          "title": "Angle Bisector Theorem",
+          "body": "AD bisects ∠A → BD/DC = AB/AC",
+          "diagramType": "bisector"
+        }
+      ],
+      "formulas": [
+        { "label": "Area", "formula": "½ × base × height" },
+        { "label": "Heron's Formula", "formula": "Area = √(s(s-a)(s-b)(s-c))", "subtext": "where s = (a+b+c)/2" }
+      ],
+      "results": [
+        "In any triangle, larger side is opposite larger angle.",
+        "Centroid divides median in ratio 2:1.",
+        "Inradius (r) = Area / s",
+        "Circumradius (R) in right Δ = Hypotenuse / 2"
+      ],
+      "shortcuts": [
+        "For right Δ check: If (largest side)² ≈ sum of squares → Right Δ",
+        "Equilateral Δ: Height = (√3/2)a, Area = (√3/4)a²",
+        "Remember: √2 ≈ 1.414, √3 ≈ 1.732"
+      ],
+      "traps": [
+        "Don't confuse area ratio with side ratio. Side ratio k → Area ratio k².",
+        "Assuming 2 sides equal ⇒ angles equal (NOT always).",
+        "Using Pythagoras in non-right Δ."
+      ],
+      "examples": [
+        { "q": "If sides are 3, 4, 5, what is the area?", "method": "3² + 4² = 5² ⇒ Right triangle with legs 3 & 4. Area = ½ × 3 × 4", "answer": "6" }
+      ],
+      "revision": [
+        "Angle sum = 180°",
+        "Pythagoras for right Δ",
+        "Area (Heron's) = √(s(s-a)(s-b)(s-c))"
+      ],
+      "motivationalQuote": "Consistent Practice Beats Talent! 😊",
+      "footerBanner": "Practice + Concept Clarity + Smart Approach = 99+ Percentile in CAT! 🔥"
+    }
+  ]
+}`;
+
+/** Used when no existing notes are available — generates from general knowledge */
+const HW_FROM_SCRATCH_SYSTEM = `You are an elite CAT 2026 preparation tutor who creates ultra-high-density, visually structured handwritten study notes.
+Given a topic, generate a complete structured JSON object for handwritten revision notes.
+
+The output must be ONLY a valid JSON object with this exact shape (no markdown fences, no extra text):
+${HW_NOTES_JSON_SCHEMA}
+
+Rules:
+- Fill all fields (basics, notationBox, typesBox, theorems, formulas, results, shortcuts, traps, examples, revision, motivationalQuote, footerBanner).
+- Use valid diagramType values when applicable: "triangle_basic", "triangle_exterior", "pythagoras", "bisector", "proportionality", "circle", "coordinate", "none".
+- Keep every text string concise and bullet-ready, optimized for quick scanning and visual memory.
+- Every formula must be mathematically precise.
+- Return ONLY the JSON object.`;
+
+/** Used when the user has existing detailed notes — distills them faithfully */
+const HW_FROM_NOTES_SYSTEM = `You are an elite CAT 2026 preparation tutor who distills detailed study notes into ultra-high-density, visually structured handwritten revision notes.
+
+You will receive detailed study notes for a topic. Your job is to extract and condense the most important information into a structured JSON object for handwritten revision notes.
+
+CRITICAL RULES:
+- Extract ALL formulas, theorems, shortcuts, traps, results verbatim from the provided notes.
+- Populate all sections (basics, notationBox, typesBox, theorems, formulas, results, shortcuts, traps, examples, revision).
+- Assign appropriate diagramType values where relevant ("triangle_basic", "triangle_exterior", "pythagoras", "bisector", "proportionality", "circle", "coordinate", "none").
+- The provided notes are the SINGLE SOURCE OF TRUTH.
+
+The output must be ONLY a valid JSON object with this exact shape (no markdown fences, no extra text):
+${HW_NOTES_JSON_SCHEMA}
+
+Rules:
+- Return ONLY the JSON object.`;
+
+/**
+ * Generate handwritten revision notes for a CAT topic.
+ * If existingNotesContent is provided (from the notes table), distills those notes.
+ * Otherwise generates from scratch using general CAT knowledge.
+ */
+export async function generateHandwrittenNotes(
+  topic: string,
+  section: string,
+  existingNotesContent?: string,
+): Promise<LLMResponse<HandwrittenNoteContent>> {
+  const usingExistingNotes = !!existingNotesContent && existingNotesContent.trim().length > 100;
+  const truncatedNotes = usingExistingNotes ? existingNotesContent!.slice(0, 28000) : null;
+
+  const messages: ChatMessage[] = usingExistingNotes
+    ? [
+        { role: "system", content: HW_FROM_NOTES_SYSTEM },
+        {
+          role: "user",
+          content: `Here are my detailed study notes for "${topic}" (${section}):\n\n${truncatedNotes}\n\nNow distill these into premium handwritten revision notes following the JSON schema exactly. Use ONLY what is in my notes — extract every formula, shortcut, trap, and key concept from there.`,
+        },
+      ]
+    : [
+        { role: "system", content: HW_FROM_SCRATCH_SYSTEM },
+        {
+          role: "user",
+          content: `Generate premium handwritten CAT revision notes for the topic: "${topic}" (Section: ${section}). Follow the JSON schema exactly.`,
+        },
+      ];
+
+  try {
+    const { content, provider } = await getCompletion(messages);
+    const cleaned = content.replace(/^```json\s*|^```\s*|\s*```$/g, "").trim();
+    const data = JSON.parse(cleaned) as HandwrittenNoteContent;
+
+    if (!data.title || !Array.isArray(data.pages) || data.pages.length === 0) {
+      return { ok: false, code: "PARSE_ERROR", message: "Invalid handwritten notes structure from LLM" };
+    }
+
+    return { ok: true, data, provider };
+  } catch (err) {
+    return {
+      ok: false,
+      code: "GENERATION_FAILED",
+      message: err instanceof Error ? err.message : String(err),
+    };
   }
 }
