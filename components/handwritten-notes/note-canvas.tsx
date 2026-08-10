@@ -98,8 +98,13 @@ function NotePage({ page, pageIndex, total, noteTitle }: { page: HandwrittenNote
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-5 items-start">
         {/* Left Column: Basics (7 cols) */}
         <div className="md:col-span-7 space-y-3">
-          <div className="inline-block px-3 py-0.5 bg-yellow-200 text-slate-900 font-extrabold text-xl rounded shadow-xs border border-yellow-300">
-            1. BASICS
+          <div className="flex items-center justify-between">
+            <div className="inline-block px-3 py-0.5 bg-yellow-200 text-slate-900 font-extrabold text-xl rounded shadow-xs border border-yellow-300">
+              1. BASICS & DEFINITIONS
+            </div>
+            <span className="text-xs font-sans font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+              CAT Weightage ★★★
+            </span>
           </div>
 
           <ul className="space-y-1.5 text-xl text-slate-800">
@@ -121,16 +126,77 @@ function NotePage({ page, pageIndex, total, noteTitle }: { page: HandwrittenNote
             )}
           </ul>
 
-          {/* Diagram centered under basics ONLY if basicsDiagramType is set and not 'none' */}
-          {page.basicsDiagramType && page.basicsDiagramType !== "none" && (
-            <div className="pt-2 flex justify-center">
-              <HandwrittenDiagram type={page.basicsDiagramType} width={170} height={115} />
-            </div>
-          )}
+          {/* Render topic-specific diagram if explicit or inferred */}
+          {(() => {
+            const topicLower = noteTitle.toLowerCase();
+            let resolvedType = page.basicsDiagramType;
+            if (!resolvedType || resolvedType === "none") {
+              if (topicLower.includes("ratio") || topicLower.includes("proportion")) resolvedType = "ratio_bars";
+              else if (topicLower.includes("percent") || topicLower.includes("fraction")) resolvedType = "percentage_pie";
+              else if (topicLower.includes("speed") || topicLower.includes("distance") || topicLower.includes("work")) resolvedType = "speed_distance";
+              else if (topicLower.includes("quadrat") || topicLower.includes("parabola") || topicLower.includes("algebra") || topicLower.includes("function")) resolvedType = "algebra_parabola";
+              else if (topicLower.includes("set") || topicLower.includes("venn") || topicLower.includes("probab")) resolvedType = "venn_diagram";
+              else if (topicLower.includes("triangle") || topicLower.includes("pythagoras") || topicLower.includes("geometry")) resolvedType = "triangle_basic";
+            }
+
+            if (resolvedType && resolvedType !== "none") {
+              return (
+                <div className="pt-2 flex justify-center">
+                  <div className="bg-white/60 p-2 rounded-xl border border-slate-200 shadow-2xs">
+                    <HandwrittenDiagram type={resolvedType} width={180} height={115} />
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
 
-        {/* Right Column: Notation & Types (5 cols) */}
+        {/* Right Column: Notation & Concept Map (5 cols) */}
         <div className="md:col-span-5 space-y-3">
+          {/* Concept Map / Flowchart Box */}
+          {page.conceptMap && page.conceptMap.length > 0 ? (
+            <div className="border-2 border-indigo-200 bg-indigo-50/50 rounded-lg p-3 text-lg">
+              <div className="font-bold text-indigo-900 text-base underline mb-2 uppercase tracking-wide flex items-center gap-1">
+                <span>🗺️ Concept Flow Map</span>
+              </div>
+              <div className="space-y-2">
+                {page.conceptMap.map((cm, i) => (
+                  <div key={i} className="bg-white/80 p-2 rounded border border-indigo-100">
+                    <div className="font-bold text-indigo-950 text-base">▶ {cm.root}</div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {cm.nodes.map((n, j) => (
+                        <span key={j} className="text-xs font-sans bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">
+                          → {n}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Auto-generated Concept Flow Mindmap Box */
+            <div className="border-2 border-dashed border-indigo-300 bg-indigo-50/40 rounded-lg p-3 text-lg">
+              <div className="font-bold text-indigo-900 text-base underline mb-1 uppercase tracking-wide flex items-center justify-between">
+                <span>🗺️ Concept Mind Map</span>
+                <span className="text-xs font-sans text-indigo-600 font-normal">Topper Structure</span>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap my-1 font-bold text-sm font-sans">
+                <span className="px-2 py-1 bg-indigo-600 text-white rounded-md shadow-2xs">
+                  {noteTitle.split(" ")[0]}
+                </span>
+                <span className="text-indigo-400">➔</span>
+                <span className="px-2 py-1 bg-purple-100 text-purple-900 rounded-md border border-purple-300">
+                  Formulas
+                </span>
+                <span className="text-indigo-400">➔</span>
+                <span className="px-2 py-1 bg-amber-100 text-amber-900 rounded-md border border-amber-300">
+                  CAT Tricks
+                </span>
+              </div>
+            </div>
+          )}
           {/* Notation Box (Dashed Purple) */}
           {page.notationBox && page.notationBox.length > 0 && (
             <div className="border-2 border-dashed border-indigo-300 bg-indigo-50/40 rounded-lg p-3 text-lg">

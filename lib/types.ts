@@ -177,12 +177,27 @@ export interface HandwrittenNoteExample {
   answer: string;
 }
 
+export type HandwrittenDiagramType =
+  | "triangle_basic"
+  | "triangle_exterior"
+  | "pythagoras"
+  | "bisector"
+  | "proportionality"
+  | "circle"
+  | "coordinate"
+  | "ratio_bars"
+  | "percentage_pie"
+  | "speed_distance"
+  | "algebra_parabola"
+  | "venn_diagram"
+  | "none";
+
 export interface HandwrittenNoteTheorem {
   num?: number;
   title: string;
   body: string;
   formula?: string;
-  diagramType?: "triangle_basic" | "triangle_exterior" | "pythagoras" | "bisector" | "proportionality" | "circle" | "coordinate" | "none";
+  diagramType?: HandwrittenDiagramType;
 }
 
 export interface HandwrittenNotePage {
@@ -191,7 +206,8 @@ export interface HandwrittenNotePage {
   subjectTag?: string;
   basicsSummary?: string;
   basics: HandwrittenNoteConcept[];
-  basicsDiagramType?: "triangle_basic" | "triangle_exterior" | "pythagoras" | "bisector" | "proportionality" | "circle" | "coordinate" | "none";
+  basicsDiagramType?: HandwrittenDiagramType;
+  conceptMap?: { root: string; nodes: string[] }[];
   notationBox?: string[];
   typesBox?: { name: string; desc: string }[];
   theorems?: HandwrittenNoteTheorem[];

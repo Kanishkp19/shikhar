@@ -164,6 +164,86 @@ export function HandwrittenDiagram({ type, width = 160, height = 110 }: DiagramP
         </svg>
       );
 
+    case "ratio_bars":
+      return (
+        <svg width={width} height={height} viewBox="0 0 160 110" className="select-none">
+          {/* Label A */}
+          <text x="15" y="32" fontSize="13" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#1e1b4b">A (2 parts):</text>
+          <rect x="80" y="20" width="30" height="15" rx="3" fill="#6366f1" opacity="0.8" />
+          <rect x="113" y="20" width="30" height="15" rx="3" fill="#6366f1" opacity="0.8" />
+
+          {/* Label B */}
+          <text x="15" y="72" fontSize="13" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#1e1b4b">B (3 parts):</text>
+          <rect x="80" y="60" width="22" height="15" rx="3" fill="#ec4899" opacity="0.8" />
+          <rect x="104" y="60" width="22" height="15" rx="3" fill="#ec4899" opacity="0.8" />
+          <rect x="128" y="60" width="22" height="15" rx="3" fill="#ec4899" opacity="0.8" />
+
+          <text x="80" y="98" fontSize="11" fontFamily="var(--font-caveat), cursive" fill="#4b5563" textAnchor="start">★ Ratio A : B = 2 : 3</text>
+        </svg>
+      );
+
+    case "percentage_pie":
+      return (
+        <svg width={width} height={height} viewBox="0 0 160 110" className="select-none">
+          {/* Circular Pie Chart */}
+          <circle cx="55" cy="55" r="38" fill="#e0e7ff" stroke="#4338ca" strokeWidth="2" />
+          {/* 25% slice */}
+          <path d="M 55 55 L 55 17 A 38 38 0 0 1 93 55 Z" fill="#6366f1" />
+          {/* 50% slice */}
+          <path d="M 55 55 L 93 55 A 38 38 0 0 1 55 93 Z" fill="#a855f7" />
+
+          {/* Legend */}
+          <text x="105" y="38" fontSize="12" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#4338ca">25% = ¼</text>
+          <text x="105" y="62" fontSize="12" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#7e22ce">50% = ½</text>
+          <text x="105" y="86" fontSize="12" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#059669">75% = ¾</text>
+        </svg>
+      );
+
+    case "speed_distance":
+      return (
+        <svg width={width} height={height} viewBox="0 0 160 110" className="select-none">
+          {/* SDT Triangle */}
+          <polygon points="80,15 25,95 135,95" fill="#fef3c7" stroke="#d97706" strokeWidth="2" />
+          <line x1="48" y1="58" x2="112" y2="58" stroke="#d97706" strokeWidth="2" />
+          <line x1="80" y1="58" x2="80" y2="95" stroke="#d97706" strokeWidth="2" />
+
+          <text x="80" y="44" textAnchor="middle" fontSize="16" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#92400e">D</text>
+          <text x="52" y="82" textAnchor="middle" fontSize="16" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#92400e">S</text>
+          <text x="108" y="82" textAnchor="middle" fontSize="16" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#92400e">T</text>
+          <text x="80" y="106" textAnchor="middle" fontSize="11" fontFamily="var(--font-caveat), cursive" fill="#b45309">D = S × T</text>
+        </svg>
+      );
+
+    case "algebra_parabola":
+      return (
+        <svg width={width} height={height} viewBox="0 0 160 110" className="select-none">
+          <line x1="15" y1="80" x2="145" y2="80" stroke="#6b7280" strokeWidth="1.5" />
+          <line x1="80" y1="10" x2="80" y2="100" stroke="#6b7280" strokeWidth="1.5" />
+
+          {/* Parabola curve */}
+          <path d="M 30 20 Q 80 105 130 20" fill="none" stroke="#2563eb" strokeWidth="2.5" />
+          <circle cx="80" cy="62" r="3" fill="#dc2626" />
+
+          <text x="88" y="62" fontSize="11" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#dc2626">Vertex</text>
+          <text x="120" y="98" fontSize="11" fontFamily="var(--font-caveat), cursive" fill="#2563eb">y = ax² + bx + c</text>
+        </svg>
+      );
+
+    case "venn_diagram":
+      return (
+        <svg width={width} height={height} viewBox="0 0 160 110" className="select-none">
+          {/* Circle A */}
+          <circle cx="60" cy="55" r="35" fill="rgba(99, 102, 241, 0.2)" stroke="#4f46e5" strokeWidth="2" />
+          {/* Circle B */}
+          <circle cx="100" cy="55" r="35" fill="rgba(236, 72, 153, 0.2)" stroke="#db2777" strokeWidth="2" />
+
+          <text x="42" y="58" fontSize="13" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#3730a3">A</text>
+          <text x="114" y="58" fontSize="13" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#9d174d">B</text>
+          <text x="80" y="58" textAnchor="middle" fontSize="10" fontFamily="var(--font-caveat), cursive" fontWeight="bold" fill="#0f172a">A∩B</text>
+          <text x="80" y="104" textAnchor="middle" fontSize="11" fontFamily="var(--font-caveat), cursive" fill="#475569">n(A∪B) = n(A) + n(B) - n(A∩B)</text>
+        </svg>
+      );
+
     default:
       return null;
   }

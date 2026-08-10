@@ -365,7 +365,10 @@ const HW_NOTES_JSON_SCHEMA = `{
   "pages": [
     {
       "basicsSummary": "1-2 sentence core definition or summary of the topic",
-      "basicsDiagramType": "none",
+      "basicsDiagramType": "ratio_bars | percentage_pie | speed_distance | algebra_parabola | venn_diagram | triangle_basic | circle | coordinate | none",
+      "conceptMap": [
+        { "root": "Core Concept / Principle", "nodes": ["Sub-concept 1", "Sub-concept 2", "Key Application"] }
+      ],
       "basics": [
         { "heading": "Definition of Ratio", "body": "Comparison of two quantities by division (a:b or a/b)" },
         { "heading": "Definition of Proportion", "body": "Equality of two ratios (a:b = c:d ⇒ ad = bc)" }
