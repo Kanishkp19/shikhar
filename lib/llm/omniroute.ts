@@ -365,67 +365,63 @@ const HW_NOTES_JSON_SCHEMA = `{
   "pages": [
     {
       "basicsSummary": "1-2 sentence core definition or summary of the topic",
+      "basicsDiagramType": "none",
       "basics": [
-        { "heading": "Sum of angles", "body": "180°" },
-        { "heading": "Triangle inequality", "body": "a + b > c, b + c > a, c + a > b" }
+        { "heading": "Definition of Ratio", "body": "Comparison of two quantities by division (a:b or a/b)" },
+        { "heading": "Definition of Proportion", "body": "Equality of two ratios (a:b = c:d ⇒ ad = bc)" }
       ],
       "notationBox": [
-        "Side opposite ∠A → a",
-        "Side opposite ∠B → b",
-        "Side opposite ∠C → c"
+        "a:b = Duplicate ratio a²:b²",
+        "a:b = Sub-duplicate ratio √a:√b",
+        "a:b = Triplicate ratio a³:b³"
       ],
       "typesBox": [
-        { "name": "Equilateral", "desc": "All sides equal (60°,60°,60°)" },
-        { "name": "Isosceles", "desc": "Two sides equal" },
-        { "name": "Right angled", "desc": "One angle = 90°" }
+        { "name": "Direct Proportion", "desc": "y = kx (y increases as x increases)" },
+        { "name": "Inverse Proportion", "desc": "y = k/x (y decreases as x increases)" },
+        { "name": "Compound Ratio", "desc": "Product of ratios (a/b × c/d = ac/bd)" }
       ],
       "theorems": [
         {
           "num": 1,
-          "title": "Exterior Angle Theorem",
-          "body": "Exterior angle = Sum of two interior opposite angles.",
-          "diagramType": "triangle_exterior"
+          "title": "Componendo & Dividendo",
+          "body": "If a/b = c/d, then (a+b)/(a-b) = (c+d)/(c-d)",
+          "formula": "(a+b)/(a-b) = (c+d)/(c-d)",
+          "diagramType": "none"
         },
         {
           "num": 2,
-          "title": "Pythagoras Theorem (Right Δ)",
-          "body": "(Hypotenuse)² = (Base)² + (Perpendicular)², i.e., c² = a² + b²",
-          "diagramType": "pythagoras"
-        },
-        {
-          "num": 3,
-          "title": "Angle Bisector Theorem",
-          "body": "AD bisects ∠A → BD/DC = AB/AC",
-          "diagramType": "bisector"
+          "title": "Invertendo & Alternando",
+          "body": "If a/b = c/d ⇒ b/a = d/c (Invertendo) & a/c = b/d (Alternando)",
+          "diagramType": "none"
         }
       ],
       "formulas": [
-        { "label": "Area", "formula": "½ × base × height" },
-        { "label": "Heron's Formula", "formula": "Area = √(s(s-a)(s-b)(s-c))", "subtext": "where s = (a+b+c)/2" }
+        { "label": "Cross Multiplication", "formula": "a/b = c/d ⇒ ad = bc" },
+        { "label": "Mean Proportional", "formula": "b = √(ac)", "subtext": "if a/b = b/c" }
       ],
       "results": [
-        "In any triangle, larger side is opposite larger angle.",
-        "Centroid divides median in ratio 2:1.",
-        "Inradius (r) = Area / s",
-        "Circumradius (R) in right Δ = Hypotenuse / 2"
+        "If a/b = c/d = e/f = k, then (a+c+e)/(b+d+f) = k.",
+        "To divide N in ratio a:b, Part 1 = N × a/(a+b), Part 2 = N × b/(a+b).",
+        "Third proportional to a, b is c where a/b = b/c ⇒ c = b²/a.",
+        "Fourth proportional to a, b, c is d where a/b = c/d ⇒ d = bc/a."
       ],
       "shortcuts": [
-        "For right Δ check: If (largest side)² ≈ sum of squares → Right Δ",
-        "Equilateral Δ: Height = (√3/2)a, Area = (√3/4)a²",
-        "Remember: √2 ≈ 1.414, √3 ≈ 1.732"
+        "Ratio scaling: Multiply/divide all terms by same non-zero number.",
+        "Combining Ratios: If A:B = 2:3 and B:C = 4:5, make B equal (LCM of 3,4 is 12) ⇒ A:B:C = 8:12:15.",
+        "Adding same quantity x to a/b brings ratio closer to 1."
       ],
       "traps": [
-        "Don't confuse area ratio with side ratio. Side ratio k → Area ratio k².",
-        "Assuming 2 sides equal ⇒ angles equal (NOT always).",
-        "Using Pythagoras in non-right Δ."
+        "Do NOT confuse ratio (a:b) with absolute values (a and b). Always use multiplier k.",
+        "Be cautious of unit conversions — quantities in a ratio MUST be in the same units.",
+        "Never add/subtract ratios directly."
       ],
       "examples": [
-        { "q": "If sides are 3, 4, 5, what is the area?", "method": "3² + 4² = 5² ⇒ Right triangle with legs 3 & 4. Area = ½ × 3 × 4", "answer": "6" }
+        { "q": "If A:B = 2:3 and B:C = 4:5, find A:B:C.", "method": "B is 3 in first, 4 in second. Multiply 1st by 4 (8:12) and 2nd by 3 (12:15).", "answer": "8 : 12 : 15" }
       ],
       "revision": [
-        "Angle sum = 180°",
-        "Pythagoras for right Δ",
-        "Area (Heron's) = √(s(s-a)(s-b)(s-c))"
+        "a/b = c/d ⇒ ad = bc",
+        "Mean proportional b = √(ac)",
+        "Componendo-Dividendo: (a+b)/(a-b) = (c+d)/(c-d)"
       ],
       "motivationalQuote": "Consistent Practice Beats Talent! 😊",
       "footerBanner": "Practice + Concept Clarity + Smart Approach = 99+ Percentile in CAT! 🔥"
@@ -440,11 +436,15 @@ Given a topic, generate a complete structured JSON object for handwritten revisi
 The output must be ONLY a valid JSON object with this exact shape (no markdown fences, no extra text):
 ${HW_NOTES_JSON_SCHEMA}
 
-Rules:
-- Fill all fields (basics, notationBox, typesBox, theorems, formulas, results, shortcuts, traps, examples, revision, motivationalQuote, footerBanner).
-- Use valid diagramType values when applicable: "triangle_basic", "triangle_exterior", "pythagoras", "bisector", "proportionality", "circle", "coordinate", "none".
-- Keep every text string concise and bullet-ready, optimized for quick scanning and visual memory.
-- Every formula must be mathematically precise.
+CRITICAL TOPIC RULES:
+- FOR NON-GEOMETRY TOPICS (like Ratio & Proportion, Percentages, Time & Work, P&C, Probability, Algebra, Number Systems, Profit & Loss):
+  * Set \`basicsDiagramType\` to "none".
+  * Set \`diagramType\` inside \`theorems\` to "none".
+  * Fill \`results\` with 4 HIGH-YIELD TOPIC-SPECIFIC MATHEMATICAL RESULTS, Ratios, or Theorems for that exact topic.
+- FOR GEOMETRY / TRIANGLES / CIRCLES / COORDINATE TOPICS:
+  * Set \`basicsDiagramType\` to "triangle_basic", "circle", or "coordinate".
+  * Set \`diagramType\` in \`theorems\` to "triangle_exterior", "pythagoras", "bisector", "proportionality", etc.
+- You MUST populate EVERY array (basics, notationBox, typesBox, theorems, formulas, results, shortcuts, traps, examples, revision) with rich, accurate content for the requested topic. Do NOT leave any array empty.
 - Return ONLY the JSON object.`;
 
 /** Used when the user has existing detailed notes — distills them faithfully */
@@ -455,7 +455,7 @@ You will receive detailed study notes for a topic. Your job is to extract and co
 CRITICAL RULES:
 - Extract ALL formulas, theorems, shortcuts, traps, results verbatim from the provided notes.
 - Populate all sections (basics, notationBox, typesBox, theorems, formulas, results, shortcuts, traps, examples, revision).
-- Assign appropriate diagramType values where relevant ("triangle_basic", "triangle_exterior", "pythagoras", "bisector", "proportionality", "circle", "coordinate", "none").
+- FOR NON-GEOMETRY TOPICS: set \`basicsDiagramType\` to "none" and all theorem \`diagramType\` to "none".
 - The provided notes are the SINGLE SOURCE OF TRUTH.
 
 The output must be ONLY a valid JSON object with this exact shape (no markdown fences, no extra text):

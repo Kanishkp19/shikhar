@@ -121,10 +121,12 @@ function NotePage({ page, pageIndex, total, noteTitle }: { page: HandwrittenNote
             )}
           </ul>
 
-          {/* Diagram centered under basics if basic diagram exists */}
-          <div className="pt-2 flex justify-center">
-            <HandwrittenDiagram type="triangle_basic" width={170} height={115} />
-          </div>
+          {/* Diagram centered under basics ONLY if basicsDiagramType is set and not 'none' */}
+          {page.basicsDiagramType && page.basicsDiagramType !== "none" && (
+            <div className="pt-2 flex justify-center">
+              <HandwrittenDiagram type={page.basicsDiagramType} width={170} height={115} />
+            </div>
+          )}
         </div>
 
         {/* Right Column: Notation & Types (5 cols) */}
@@ -133,7 +135,7 @@ function NotePage({ page, pageIndex, total, noteTitle }: { page: HandwrittenNote
           {page.notationBox && page.notationBox.length > 0 && (
             <div className="border-2 border-dashed border-indigo-300 bg-indigo-50/40 rounded-lg p-3 text-lg">
               <div className="font-bold text-indigo-900 text-base underline mb-1 uppercase tracking-wide">
-                Notation
+                Notation & Terms
               </div>
               <ul className="space-y-0.5 text-slate-800">
                 {page.notationBox.map((n, i) => (
@@ -195,7 +197,7 @@ function NotePage({ page, pageIndex, total, noteTitle }: { page: HandwrittenNote
                 </div>
 
                 {/* Inline SVG Diagram if applicable */}
-                {thm.diagramType && (
+                {thm.diagramType && thm.diagramType !== "none" && (
                   <div className="flex justify-end mt-2">
                     <HandwrittenDiagram type={thm.diagramType} width={150} height={100} />
                   </div>
@@ -234,7 +236,7 @@ function NotePage({ page, pageIndex, total, noteTitle }: { page: HandwrittenNote
             4. IMPORTANT RESULTS
           </div>
           <ul className="space-y-1.5 text-xl text-slate-800 flex-1">
-            {(page.results && page.results.length > 0 ? page.results : ["Key ratio and angle properties to memorize."]).map((r, i) => (
+            {(page.results && page.results.length > 0 ? page.results : ["Core properties and key results to memorize."]).map((r, i) => (
               <li key={i} className="flex items-start gap-1.5 leading-snug">
                 <span className="text-sky-600 font-bold shrink-0">•</span>
                 <span>{r}</span>

@@ -191,6 +191,7 @@ export interface HandwrittenNotePage {
   subjectTag?: string;
   basicsSummary?: string;
   basics: HandwrittenNoteConcept[];
+  basicsDiagramType?: "triangle_basic" | "triangle_exterior" | "pythagoras" | "bisector" | "proportionality" | "circle" | "coordinate" | "none";
   notationBox?: string[];
   typesBox?: { name: string; desc: string }[];
   theorems?: HandwrittenNoteTheorem[];

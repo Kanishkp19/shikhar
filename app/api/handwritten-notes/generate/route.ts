@@ -39,20 +39,38 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   let existingNotesContent: string | undefined;
 
-  const { data: existingNotes } = await supabase
+  // Clean topic string: e.g. "Ratio & Proportion — concepts + 25 problems" -> "Ratio & Proportion"
+  const rawClean = (topic.split("—")[0] ?? topic).split("-")[0] ?? topic;
+  const cleanTopicName = rawClean.trim();
+  const keywords = cleanTopicName.replace(/[^\w\s]/gi, " ").split(/\s+/).filter((w) => w.length > 2);
+  const primaryKeyword = keywords[0] ?? cleanTopicName;
+
+  // Search strategy 1: ilike with clean topic name
+  let { data: existingNotes } = await supabase
     .from("notes")
     .select("content, topic")
     .eq("user_id", user.id)
-    // Match by topic — try exact first, then case-insensitive contains
-    .ilike("topic", `%${topic.split(" ").slice(0, 3).join(" ")}%`)
+    .ilike("topic", `%${cleanTopicName}%`)
     .order("created_at", { ascending: false })
     .limit(1);
+
+  // Search strategy 2: ilike with primary keyword if strategy 1 yielded nothing
+  if ((!existingNotes || existingNotes.length === 0) && primaryKeyword) {
+    const res = await supabase
+      .from("notes")
+      .select("content, topic")
+      .eq("user_id", user.id)
+      .ilike("topic", `%${primaryKeyword}%`)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    existingNotes = res.data;
+  }
 
   if (existingNotes && existingNotes.length > 0 && existingNotes[0]) {
     existingNotesContent = existingNotes[0].content as string;
     console.log(`[HW Notes] Found existing notes for "${existingNotes[0].topic}" — using as source material`);
   } else {
-    console.log(`[HW Notes] No existing notes for "${topic}" — generating from scratch`);
+    console.log(`[HW Notes] No existing notes for "${topic}" (cleaned: "${cleanTopicName}", keyword: "${primaryKeyword}") — generating from scratch`);
   }
 
   // Generate structured notes via LLM (with existing notes if available)
