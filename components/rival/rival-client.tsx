@@ -20,6 +20,7 @@ import {
 import { useActiveStudyStore } from "@/lib/store/active-study-store";
 
 export function RivalClient() {
+  const [mounted, setMounted] = useState(false);
   const { todayActiveSeconds } = useActiveStudyStore();
   const [selectedRivalId, setSelectedRivalId] = useState<string>("aaditya");
   const [extraHours, setExtraHours] = useState<number>(0);
@@ -31,11 +32,12 @@ export function RivalClient() {
   const [logQuestionsInput, setLogQuestionsInput] = useState<string>("5");
 
   // Real active study hours + extra manually logged hours
-  const activeHours = +(todayActiveSeconds / 3600).toFixed(1);
+  const activeHours = mounted ? +(todayActiveSeconds / 3600).toFixed(1) : 0;
   const userHours = +(activeHours + extraHours).toFixed(1);
 
   // Load saved rival state on mount
   useEffect(() => {
+    setMounted(true);
     const savedRival = localStorage.getItem("shikhar_selected_rival");
     if (savedRival) setSelectedRivalId(savedRival);
 

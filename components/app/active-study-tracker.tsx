@@ -7,10 +7,11 @@ import { StudyLogModal } from "@/components/app/study-log-modal";
 import { cn } from "@/lib/utils";
 
 export function ActiveStudyTrackerProvider() {
+  const [mounted, setMounted] = useState(false);
   const {
-    recordActivity,
     tickSecond,
     status,
+    autoPauseMinutes,
     resumeTracker,
     pauseTracker,
     todayActiveSeconds,
@@ -19,52 +20,56 @@ export function ActiveStudyTrackerProvider() {
   } = useActiveStudyStore();
   const [logModalOpen, setLogModalOpen] = useState(false);
 
-  const idleRemaining = getIdleRemainingSeconds();
-  const isActive = status === "active";
-  const isAutoPaused = status === "paused-inactivity";
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 1. Tick timer every 1 second
   useEffect(() => {
+    if (!mounted) return;
     const interval = setInterval(() => {
       tickSecond();
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [tickSecond]);
+  }, [mounted, tickSecond]);
 
-  // 2. Comprehensive capture-phase interaction listeners for 10-minute inactivity detection & instant auto-resume
+  // 2. Intentional interaction listeners (Clicks & Scrolling only — cursor movements strictly ignored)
   useEffect(() => {
+    if (!mounted) return;
     const handleUserInteraction = () => {
       useActiveStudyStore.getState().recordActivity();
     };
 
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        useActiveStudyStore.getState().recordActivity();
-      }
+    // When tab is switched or window focused, catch up time delta immediately without resetting inactivity countdown
+    const handleSyncDeltaTime = () => {
+      useActiveStudyStore.getState().tickSecond();
     };
 
-    const handleFocus = () => {
-      useActiveStudyStore.getState().recordActivity();
-    };
-
-    const events = ["pointermove", "pointerdown", "mousedown", "keydown", "touchstart", "scroll", "wheel", "click"];
+    // Strict interactions: only scroll, wheel, click, touch, and typing (NO mouse movements / hover)
+    const events = ["click", "scroll", "wheel", "touchstart", "keydown"];
     const options = { capture: true, passive: true };
 
     events.forEach((evtName) => {
       document.addEventListener(evtName, handleUserInteraction, options);
     });
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleSyncDeltaTime);
+    window.addEventListener("focus", handleSyncDeltaTime);
 
     return () => {
       events.forEach((evtName) => {
         document.removeEventListener(evtName, handleUserInteraction, options);
       });
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleSyncDeltaTime);
+      window.removeEventListener("focus", handleSyncDeltaTime);
     };
-  }, []);
+  }, [mounted]);
+
+  if (!mounted) return null;
+
+  const idleRemaining = getIdleRemainingSeconds();
+  const isActive = status === "active";
+  const isAutoPaused = status === "paused-inactivity";
 
   const handleTogglePause = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -77,7 +82,7 @@ export function ActiveStudyTrackerProvider() {
 
   return (
     <>
-      {/* Permanent Sleek Top-Right Active Study & 10m Countdown Badge */}
+      {/* Permanent Sleek Top-Right Active Study & Countdown Badge */}
       <div className="fixed top-3 right-4 z-40 flex items-center gap-2">
         <div
           onClick={() => setLogModalOpen(true)}
@@ -112,7 +117,7 @@ export function ActiveStudyTrackerProvider() {
             </span>
           </div>
 
-          {/* Live 10m Countdown Indicator */}
+          {/* Live Countdown Indicator */}
           {isActive && (
             <div className="flex items-center gap-1 border-l border-hairline pl-2 text-ink-muted">
               <Hourglass className="h-3 w-3 text-amber-600 animate-spin" />
@@ -124,7 +129,7 @@ export function ActiveStudyTrackerProvider() {
 
           {!isActive && (
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 border-l border-hairline pl-2">
-              {isAutoPaused ? "Auto-Paused (10m)" : "Paused"}
+              {isAutoPaused ? `Auto-Paused (${autoPauseMinutes || 10}m)` : "Paused"}
             </span>
           )}
         </div>
@@ -148,17 +153,17 @@ export function ActiveStudyTrackerProvider() {
         </button>
       </div>
 
-      {/* Auto-Paused Banner when 10 mins of inactivity is hit */}
+      {/* Auto-Paused Banner when inactivity limit is reached */}
       {isAutoPaused && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 animate-bounce">
           <div className="bg-amber-950 text-amber-100 border border-amber-500/30 px-4 py-2.5 rounded-full shadow-lg flex items-center gap-3 backdrop-blur-md">
             <PauseCircle className="h-4 w-4 text-amber-400 shrink-0" />
             <p className="text-xs font-semibold">
-              <span className="font-bold text-amber-300">Study Timer Auto-Paused:</span> 10 mins of inactivity detected.
+              <span className="font-bold text-amber-300">Study Timer Auto-Paused:</span> {autoPauseMinutes || 10} min{(autoPauseMinutes || 10) > 1 ? "s" : ""} of inactivity detected.
             </p>
             <button
               onClick={resumeTracker}
-              className="px-3 py-1 bg-amber-400 text-amber-950 rounded-full font-bold text-xs hover:bg-amber-300 transition-colors shrink-0 flex items-center gap-1"
+              className="px-3 py-1 bg-amber-400 text-amber-950 rounded-full font-bold text-xs hover:bg-amber-300 transition-colors shrink-0 flex items-center gap-1 cursor-pointer"
             >
               <PlayCircle className="h-3.5 w-3.5" /> Resume
             </button>

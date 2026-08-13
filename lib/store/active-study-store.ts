@@ -14,6 +14,8 @@ interface ActiveStudyState {
   todayActiveSeconds: number;
   status: TrackerStatus;
   lastActivityTime: number;
+  lastTickTime: number;
+  autoPauseMinutes: number; // 1 to 10 minutes, default 10
   dailyLogs: Record<string, number>; // dateStr -> total seconds
 
   // Actions
@@ -21,6 +23,7 @@ interface ActiveStudyState {
   tickSecond: () => void;
   pauseTracker: () => void;
   resumeTracker: () => void;
+  setAutoPauseMinutes: (minutes: number) => void;
   getFormattedDuration: (seconds: number) => string;
   getDailyLogEntries: () => DailyStudyLogEntry[];
   getIdleRemainingSeconds: () => number;
@@ -84,6 +87,8 @@ export const useActiveStudyStore = create<ActiveStudyState>()(
       todayActiveSeconds: 0,
       status: "active",
       lastActivityTime: Date.now(),
+      lastTickTime: Date.now(),
+      autoPauseMinutes: 10,
       dailyLogs: {},
 
       recordActivity: () => {
@@ -97,6 +102,7 @@ export const useActiveStudyStore = create<ActiveStudyState>()(
             todayDateStr: today,
             todayActiveSeconds: state.dailyLogs[today] || 0,
             lastActivityTime: now,
+            lastTickTime: now,
             status: "active",
           });
           return;
@@ -107,8 +113,9 @@ export const useActiveStudyStore = create<ActiveStudyState>()(
           set({
             status: "active",
             lastActivityTime: now,
+            lastTickTime: now,
           });
-        } else {
+        } else if (state.status === "active") {
           set({ lastActivityTime: now });
         }
       },
@@ -124,34 +131,35 @@ export const useActiveStudyStore = create<ActiveStudyState>()(
             todayDateStr: today,
             todayActiveSeconds: state.dailyLogs[today] || 0,
             lastActivityTime: now,
+            lastTickTime: now,
             status: "active",
           });
           return;
         }
 
-        // If manually paused, do nothing
-        if (state.status === "paused-manual") return;
-
-        // Calculate time elapsed since last activity
-        const idleMs = now - state.lastActivityTime;
-
-        // If idle for >= 10 minutes (600,000ms), auto-pause
-        if (idleMs >= 600_000) {
-          if (state.status === "active") {
-            set({ status: "paused-inactivity" });
-          }
+        // If manually paused or paused by inactivity, keep lastTickTime synced and return
+        if (state.status === "paused-manual" || state.status === "paused-inactivity") {
+          set({ lastTickTime: now });
           return;
         }
 
-        // If active, increment time
-        if (state.status === "active") {
-          const nextSecs = state.todayActiveSeconds + 1;
+        // Active tracker: calculate idle time and elapsed active time with delta math
+        const autoPauseMinutes = Math.min(10, Math.max(1, state.autoPauseMinutes || 10));
+        const autoPauseLimitMs = autoPauseMinutes * 60 * 1000;
+        const idleMs = Math.max(0, now - state.lastActivityTime);
+
+        // If idle for >= configured autoPauseMinutes, auto-pause
+        if (idleMs >= autoPauseLimitMs) {
+          const triggerTime = state.lastActivityTime + autoPauseLimitMs;
+          const activeMs = Math.max(0, triggerTime - state.lastTickTime);
+          const secondsEarned = Math.floor(activeMs / 1000);
+
+          const nextSecs = state.todayActiveSeconds + secondsEarned;
           const updatedLogs = {
             ...state.dailyLogs,
             [today]: nextSecs,
           };
 
-          // Keep shikhar_user_hours synced for Rival & Progress components
           try {
             const hoursFormatted = (nextSecs / 3600).toFixed(1);
             localStorage.setItem("shikhar_user_hours", hoursFormatted);
@@ -162,13 +170,56 @@ export const useActiveStudyStore = create<ActiveStudyState>()(
           set({
             todayActiveSeconds: nextSecs,
             dailyLogs: updatedLogs,
+            status: "paused-inactivity",
+            lastTickTime: now,
+          });
+          return;
+        }
+
+        // Active state with continuous background-resilient tracking
+        const activeMs = Math.max(0, now - state.lastTickTime);
+        const secondsEarned = Math.floor(activeMs / 1000);
+
+        if (secondsEarned > 0) {
+          const nextSecs = state.todayActiveSeconds + secondsEarned;
+          const updatedLogs = {
+            ...state.dailyLogs,
+            [today]: nextSecs,
+          };
+
+          try {
+            const hoursFormatted = (nextSecs / 3600).toFixed(1);
+            localStorage.setItem("shikhar_user_hours", hoursFormatted);
+          } catch (_e) {
+            // ignore localStorage errors
+          }
+
+          set({
+            todayActiveSeconds: nextSecs,
+            dailyLogs: updatedLogs,
+            lastTickTime: state.lastTickTime + (secondsEarned * 1000),
           });
         }
       },
 
-      pauseTracker: () => set({ status: "paused-manual" }),
+      pauseTracker: () => {
+        get().tickSecond();
+        set({ status: "paused-manual", lastTickTime: Date.now() });
+      },
 
-      resumeTracker: () => set({ status: "active", lastActivityTime: Date.now() }),
+      resumeTracker: () => {
+        const now = Date.now();
+        set({
+          status: "active",
+          lastActivityTime: now,
+          lastTickTime: now,
+        });
+      },
+
+      setAutoPauseMinutes: (minutes: number) => {
+        const clamped = Math.min(10, Math.max(1, Math.round(minutes)));
+        set({ autoPauseMinutes: clamped });
+      },
 
       getFormattedDuration: (seconds: number) => formatSecondsToHumanReadable(seconds),
 
@@ -190,8 +241,10 @@ export const useActiveStudyStore = create<ActiveStudyState>()(
       getIdleRemainingSeconds: () => {
         const state = get();
         if (state.status !== "active") return 0;
+        const autoPauseMinutes = Math.min(10, Math.max(1, state.autoPauseMinutes || 10));
+        const autoPauseLimitMs = autoPauseMinutes * 60 * 1000;
         const idleMs = Date.now() - state.lastActivityTime;
-        const remainingMs = Math.max(0, 600_000 - idleMs);
+        const remainingMs = Math.max(0, autoPauseLimitMs - idleMs);
         return Math.ceil(remainingMs / 1000);
       },
     }),

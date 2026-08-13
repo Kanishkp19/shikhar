@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -259,8 +260,36 @@ export function ProgressClient({ initialMocks, initialError, streak }: Props) {
 }
 
 function DailyStudyLogCard() {
-  const { getDailyLogEntries, getFormattedDuration, todayDateStr } = useActiveStudyStore();
-  const entries = getDailyLogEntries();
+  const [mounted, setMounted] = useState(false);
+  const { getDailyLogEntries, getFormattedDuration, todayDateStr, autoPauseMinutes } = useActiveStudyStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const entries = mounted ? getDailyLogEntries() : [];
+  const pauseMinutes = autoPauseMinutes || 10;
+
+  if (!mounted) {
+    return (
+      <Card className="mt-4">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            <div>
+              <CardTitle>Daily Active Study Logs</CardTitle>
+              <CardDescription>
+                Real active time spent studying on Shikhar. Auto-pauses after 10 minutes of inactivity.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="py-6 text-center text-xs text-ink-muted">Loading study history...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="mt-4">
@@ -270,7 +299,7 @@ function DailyStudyLogCard() {
           <div>
             <CardTitle>Daily Active Study Logs</CardTitle>
             <CardDescription>
-              Real active time spent studying on Shikhar. Auto-pauses after 10 minutes of inactivity.
+              Real active time spent studying on Shikhar. Auto-pauses after {pauseMinutes} minute{pauseMinutes > 1 ? "s" : ""} of inactivity.
             </CardDescription>
           </div>
         </div>

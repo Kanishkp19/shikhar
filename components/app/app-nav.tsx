@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Calendar, MessageSquare, FileText, Layers, GitFork, Newspaper, TrendingUp, Settings, PenLine, Swords, Clock, Pause, Play } from "lucide-react";
@@ -101,9 +101,14 @@ export function AppNav({ email }: { email: string }) {
 }
 
 function ActiveStudyNavWidget() {
+  const [mounted, setMounted] = useState(false);
   const { todayActiveSeconds, status, getFormattedDuration, pauseTracker, resumeTracker } =
     useActiveStudyStore();
   const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActive = status === "active";
   const isAutoPaused = status === "paused-inactivity";
@@ -116,6 +121,20 @@ function ActiveStudyNavWidget() {
       resumeTracker();
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="w-full p-2.5 rounded-xl border bg-canvas-soft border-hairline text-ink-muted text-left flex items-center justify-between gap-2 shadow-xs">
+        <div className="flex items-center gap-2 truncate">
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-ink-faint shrink-0" />
+          <div className="truncate">
+            <p className="text-[10px] uppercase font-bold text-ink-muted leading-tight">Active Today</p>
+            <p className="text-xs font-mono font-extrabold text-ink truncate">0 mins</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
