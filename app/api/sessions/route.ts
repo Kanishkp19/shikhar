@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ data });
-  } catch (err: any) {
+  } catch (_err: unknown) {
     return NextResponse.json(
       {
         data: {
@@ -66,7 +66,7 @@ export async function PATCH(req: NextRequest) {
 
     const supabase = await createClient();
 
-    let updateData: any = {};
+    let updateData: Record<string, string> = {};
     if (action === "pause") {
       updateData = { status: "paused" };
     } else if (action === "resume") {
@@ -85,7 +85,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (_err: unknown) {
     return NextResponse.json({ success: true });
   }
 }
