@@ -12,8 +12,9 @@ import { PercentileChart } from "@/components/progress/percentile-chart";
 import { StreakChart } from "@/components/progress/streak-chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toaster";
-import { Plus, Flame, TrendingUp, Award, Target } from "lucide-react";
+import { Plus, Flame, TrendingUp, Award, Target, Clock, Calendar } from "lucide-react";
 import type { MockScore, StreakInfo } from "@/lib/types";
+import { useActiveStudyStore } from "@/lib/store/active-study-store";
 
 interface Props {
   initialMocks: MockScore[];
@@ -250,6 +251,70 @@ export function ProgressClient({ initialMocks, initialError, streak }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Daily Active Study Time History Log */}
+      <DailyStudyLogCard />
     </div>
+  );
+}
+
+function DailyStudyLogCard() {
+  const { getDailyLogEntries, getFormattedDuration, todayDateStr } = useActiveStudyStore();
+  const entries = getDailyLogEntries();
+
+  return (
+    <Card className="mt-4">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
+          <div>
+            <CardTitle>Daily Active Study Logs</CardTitle>
+            <CardDescription>
+              Real active time spent studying on Shikhar. Auto-pauses after 10 minutes of inactivity.
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {entries.map((entry) => {
+            const isToday = entry.dateStr === todayDateStr;
+            const targetSecs = 14400; // 4 hours target
+            const percent = Math.min(100, Math.round((entry.seconds / targetSecs) * 100));
+
+            return (
+              <div key={entry.dateStr} className="p-3.5 rounded-xl border border-hairline bg-surface space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-ink-muted" />
+                    <span className="font-bold text-ink text-sm">{entry.formattedDate}</span>
+                    {isToday && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-primary text-on-primary">
+                        Today
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-mono font-extrabold text-sm text-primary">
+                    {getFormattedDuration(entry.seconds)}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <div className="h-2 w-full bg-hairline rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-500 rounded-full"
+                      style={{ width: `${percent}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-ink-muted font-medium">
+                    <span>Target: 4.0 hrs/day</span>
+                    <span>{percent}% achieved</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

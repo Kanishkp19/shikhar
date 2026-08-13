@@ -73,15 +73,28 @@ export function SessionTimerBar() {
           topicTitle: activeTopic.title,
           section: activeTopic.section,
         }),
-      });
-      const data = await res.json();
-      if (data.data) {
+      }).catch(() => null);
+
+      if (res && res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data.data) {
+          setActiveSession({
+            id: data.data.id,
+            topicTitle: data.data.topic_title,
+            section: data.data.section,
+            status: "running",
+            startedAt: data.data.started_at,
+            elapsedSeconds: 0,
+          });
+        }
+      } else {
+        // Fallback local session state
         setActiveSession({
-          id: data.data.id,
-          topicTitle: data.data.topic_title,
-          section: data.data.section,
+          id: `local_${Date.now()}`,
+          topicTitle: activeTopic.title,
+          section: activeTopic.section,
           status: "running",
-          startedAt: data.data.started_at,
+          startedAt: new Date().toISOString(),
           elapsedSeconds: 0,
         });
       }
