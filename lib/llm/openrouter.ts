@@ -54,13 +54,15 @@ export async function generateNotes(topic: string, section?: string): Promise<LL
 Follow EVERY section of the notes skill in exact order:
 1. File header & Topic Introduction
 2. Concept Map & Visual Taxonomy (\`\`\`mermaid flowchart/mindmap)
-3. All PART N concept sections (minimum 12 worked examples total). For Geometry/Mensuration/Trigonometry/Coordinate topics, include crisp, properly labeled inline SVG figures (\`\`\`svg with labeled vertices A, B, C, D, side lengths, heights, and angle arcs).
-4. Practice Questions (25–30 for QA with full worked solutions for every question, including problem-specific diagrams for geometry questions)
-5. Speed Techniques (minimum 6)
-6. CAT Trap File (minimum 7 traps)
-7. Master Cheat Sheet with comprehensive Markdown comparison tables and ━━━ box separators.
+3. All PART N concept sections: Cover EVERY formula, identity, theorem, 2D area, 3D solid, cone, frustum, sphere, recasting rule, and CAT shortcut in full depth.
+4. CONTEXT-ACCURATE SVG DIAGRAMS (\`\`\`svg ... \`\`\`): Every concept and worked example in Geometry, Mensuration, or Trigonometry MUST include its own dedicated, problem-specific SVG diagram showing labeled vertices (A, B, C, D, O, I), dimension markings, heights, angle arcs (30°, 45°, 60°), right-angle markers, and dashed construction lines.
+5. Worked Examples: Minimum 12 worked examples total with step-by-step solutions and diagrams.
+6. Practice Questions: Complete set of 25–30 questions for QA with full step-by-step worked solutions for every single question (Tier 1: 8–10 Qs, Tier 2: 10–12 Qs, Tier 3: 8–10 Qs).
+7. Speed Techniques (minimum 6)
+8. CAT Trap File (minimum 7 traps)
+9. Master Cheat Sheet with comprehensive Markdown comparison tables and ━━━ box separators.
 
-Target 3,000–5,000+ words. Write in extreme depth. Do not summarize or shorten any section or question solution.`,
+Target 3,500–5,500+ words. Write in extreme depth. Do NOT summarize or truncate any section or question solution.`,
     },
   ];
 
@@ -367,7 +369,13 @@ async function callGeminiDirect(
   const system = messages.find((m) => m.role === "system")?.content ?? "";
   const userParts = messages.filter((m) => m.role !== "system");
 
-  const directModels = ["gemini-3.7-flash", "gemini-3-flash-preview", "gemini-flash-latest"];
+  const directModels = [
+    "gemini-3.6-flash",
+    "gemini-3-flash-preview",
+    "gemini-3.5-flash",
+    "gemini-3.7-flash",
+    "gemini-flash-latest",
+  ];
   let lastError: { code: LLMErrorCode; message: string } = { code: "LLM_ERROR", message: "Gemini call failed" };
 
   for (const model of directModels) {

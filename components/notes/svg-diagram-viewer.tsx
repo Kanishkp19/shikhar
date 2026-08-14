@@ -65,6 +65,18 @@ export function SvgDiagramViewer({ svgCode, title = "Geometric Figure", classNam
   const [copied, setCopied] = React.useState(false);
   const [expanded, setExpanded] = React.useState(false);
 
+  const displayTitle = React.useMemo(() => {
+    const titleTagMatch = /<title[^>]*>([^<]+)<\/title>/i.exec(svgCode);
+    if (titleTagMatch && titleTagMatch[1]?.trim()) {
+      return titleTagMatch[1].trim();
+    }
+    const dataTitleMatch = /data-title=["']([^"']+)["']/i.exec(svgCode);
+    if (dataTitleMatch && dataTitleMatch[1]?.trim()) {
+      return dataTitleMatch[1].trim();
+    }
+    return title || "Geometric Figure";
+  }, [svgCode, title]);
+
   const sanitized = React.useMemo(() => sanitizeSvgCode(svgCode), [svgCode]);
 
   const handleCopy = async () => {
@@ -93,7 +105,7 @@ export function SvgDiagramViewer({ svgCode, title = "Geometric Figure", classNam
           <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 text-primary">
             <Shapes className="h-3.5 w-3.5" />
           </div>
-          <span>{title}</span>
+          <span>{displayTitle}</span>
         </div>
 
         <div className="flex items-center gap-1">

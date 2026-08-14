@@ -197,7 +197,7 @@ export function NoteViewer({
                 return (
                   <SvgDiagramViewer
                     svgCode={codeString}
-                    title={`${note?.topic ?? "Diagram"} — Figure`}
+                    title="Geometric Figure"
                   />
                 );
               }
