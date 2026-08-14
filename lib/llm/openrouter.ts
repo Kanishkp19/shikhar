@@ -51,7 +51,14 @@ export async function generateNotes(topic: string, section?: string): Promise<LL
       role: "user",
       content: `Generate the complete, gold-standard CAT topper notes for topic: "${topic}"${sectionText}.
 
-Follow EVERY section of the notes skill in exact order: file header, Topic Introduction, all PART N concept sections (minimum 12 worked examples across the file), Practice Questions (25–30 for QA with full worked solutions for every question), Speed Techniques (minimum 6), the CAT Trap File (minimum 7 traps), and the Master Cheat Sheet with ━━━ box separators.
+Follow EVERY section of the notes skill in exact order:
+1. File header & Topic Introduction
+2. Concept Map & Visual Taxonomy (\`\`\`mermaid flowchart/mindmap)
+3. All PART N concept sections (minimum 12 worked examples total). For Geometry/Mensuration/Trigonometry/Coordinate topics, include crisp, properly labeled inline SVG figures (\`\`\`svg with labeled vertices A, B, C, D, side lengths, heights, and angle arcs).
+4. Practice Questions (25–30 for QA with full worked solutions for every question, including problem-specific diagrams for geometry questions)
+5. Speed Techniques (minimum 6)
+6. CAT Trap File (minimum 7 traps)
+7. Master Cheat Sheet with comprehensive Markdown comparison tables and ━━━ box separators.
 
 Target 3,000–5,000+ words. Write in extreme depth. Do not summarize or shorten any section or question solution.`,
     },
@@ -63,25 +70,49 @@ Target 3,000–5,000+ words. Write in extreme depth. Do not summarize or shorten
   const NOTES_MAX_TOKENS = 32768;
   const NOTES_TIMEOUT_MS = 240000; // route maxDuration is 300s
 
-  // ─── Generation with up to 2 verification retries ───
-  const MAX_VERIFY_RETRIES = 2;
+  // ─── Generation with multi-model fallback ───
+  let content: string = "";
+  let usedModel: "gemini-2.5-flash" | "deepseek-chat" = "gemini-2.5-flash";
 
-  for (let attempt = 0; attempt <= MAX_VERIFY_RETRIES; attempt++) {
-    const direct = await callGeminiDirect(messages, 0.3, NOTES_TIMEOUT_MS, NOTES_MAX_TOKENS);
-    let content: string;
-
-    if (direct.ok && direct.content.trim().length > 0) {
-      content = direct.content;
+  // 1. Direct Google Gemini API (gemini-3.7-flash -> gemini-3-flash-preview -> gemini-flash-latest)
+  const direct = await callGeminiDirect(messages, 0.3, NOTES_TIMEOUT_MS, NOTES_MAX_TOKENS);
+  if (direct.ok && direct.content.trim().length > 0) {
+    content = direct.content;
+    usedModel = "gemini-2.5-flash";
+  } else {
+    // 2. Groq Llama 3.3 70B (free, sub-5s latency, reliable)
+    console.warn(`Direct Gemini unavailable (${!direct.ok ? direct.message : "empty"}). Trying Groq...`);
+    const groq = await callGroq(messages, 0.3, 45000);
+    if (groq.ok && groq.content.trim().length > 0) {
+      content = groq.content;
+      usedModel = "gemini-2.5-flash";
     } else {
-      console.warn(`Gemini direct unavailable (${!direct.ok ? direct.message : "empty"}). Trying OpenRouter...`);
+      // 3. OpenRouter Fallback
+      console.warn("Groq unavailable. Trying OpenRouter...");
       const primary = await callOnce(PRIMARY_MODEL, messages, 0.3, NOTES_TIMEOUT_MS, NOTES_MAX_TOKENS);
       if (primary.ok && primary.content.trim().length > 0) {
         content = primary.content;
+        usedModel = "gemini-2.5-flash";
       } else {
-        return !direct.ok
-          ? { ok: false, code: direct.code, message: direct.message }
-          : { ok: false, code: "LLM_ERROR", message: "Empty response" };
-}
+        const fallback = await callOnce(FALLBACK_MODEL, messages, 0.3, NOTES_TIMEOUT_MS, NOTES_MAX_TOKENS);
+        if (fallback.ok && fallback.content.trim().length > 0) {
+          content = fallback.content;
+          usedModel = "deepseek-chat";
+        } else {
+          return {
+            ok: false,
+            code: "LLM_BUSY",
+            message: "AI services are temporarily busy. Please wait a few moments and retry.",
+          };
+        }
+      }
+    }
+  }
+
+  // Clean scratch reasoning text
+  content = stripScratchText(content);
+
+  return { ok: true, content, model: usedModel };
 }
 
 /**
@@ -235,54 +266,6 @@ function checkStructure(content: string): { ok: true } | { ok: false; message: s
   return { ok: true };
 }
 
-    // Step 1: Remove internal scratch text ("Wait, let me verify...", "Let's re-check...")
-    content = stripScratchText(content);
-
-    // Step 2: Math verification — check all MCQ options against computed answers
-    const verifyResult = await verifyMath(content);
-    if (!verifyResult.ok) {
-      console.warn(`Verification warning (attempt ${attempt + 1}/${MAX_VERIFY_RETRIES + 1}): ${verifyResult.message}`);
-      if (attempt < MAX_VERIFY_RETRIES) {
-        messages.push(
-          { role: "assistant", content },
-          {
-            role: "user",
-            content: `Your previous output had math errors. Fix them:
-${verifyResult.message}
-
-Regenerate the FULL notes with CORRECT arithmetic. Every MCQ option must match the computed answer exactly. Remove all internal reasoning text.`,
-          },
-        );
-        continue; // retry
-      }
-    }
-
-    // Step 3: Structural completeness check
-    const structureCheck = checkStructure(content);
-    if (!structureCheck.ok) {
-      console.warn(`Structure check warning (attempt ${attempt + 1}): ${structureCheck.message}`);
-      if (attempt < MAX_VERIFY_RETRIES) {
-        messages.push(
-          { role: "assistant", content },
-          {
-            role: "user",
-            content: `Your previous output is missing required sections. Add them:
-${structureCheck.message}
-
-Regenerate the FULL notes with ALL required sections present.`,
-          },
-        );
-        continue;
-      }
-    }
-
-    // Return generated content cleanly (never throw 502)
-    return { ok: true, content, model: "gemini-2.5-flash" };
-  }
-
-  return { ok: false, code: "VERIFY_FAILED", message: "Generation timeout exceeded" };
-}
-
 /**
  * Summarize raw news headlines into structured digest JSON.
  * Used by the `refresh-news` cron route.
@@ -384,48 +367,62 @@ async function callGeminiDirect(
   const system = messages.find((m) => m.role === "system")?.content ?? "";
   const userParts = messages.filter((m) => m.role !== "system");
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify({
-          ...(system ? { system_instruction: { parts: [{ text: system }] } } : {}),
-          contents: userParts.map((m) => ({
-            role: m.role === "assistant" ? "model" : "user",
-            parts: [{ text: m.content }],
-          })),
-          generationConfig: { temperature, maxOutputTokens: maxTokens },
-        }),
-        signal: controller.signal,
-      },
-    );
+  const directModels = ["gemini-3.7-flash", "gemini-3-flash-preview", "gemini-flash-latest"];
+  let lastError: { code: LLMErrorCode; message: string } = { code: "LLM_ERROR", message: "Gemini call failed" };
 
-    if (res.status === 429 || res.status >= 500) {
-      return { ok: false, code: "LLM_BUSY", message: `Gemini ${res.status}` };
-    }
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      return { ok: false, code: "LLM_ERROR", message: `Gemini ${res.status}: ${errText.slice(0, 200)}` };
-    }
+  for (const model of directModels) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify({
+            ...(system ? { system_instruction: { parts: [{ text: system }] } } : {}),
+            contents: userParts.map((m) => ({
+              role: m.role === "assistant" ? "model" : "user",
+              parts: [{ text: m.content }],
+            })),
+            generationConfig: { temperature, maxOutputTokens: maxTokens },
+          }),
+          signal: controller.signal,
+        },
+      );
 
-    const body = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-    const content = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-    if (!content) return { ok: false, code: "LLM_ERROR", message: "Empty response from Gemini" };
-    return { ok: true, content };
-  } catch (e) {
-    if (e instanceof Error && e.name === "AbortError") {
-      return { ok: false, code: "LLM_TIMEOUT", message: `Gemini timed out after ${timeoutMs}ms` };
+      if (res.status === 429 || res.status >= 500) {
+        lastError = { code: "LLM_BUSY", message: `Gemini ${model} returned status ${res.status}` };
+        console.warn(`[GeminiDirect] ${model} returned ${res.status}, trying next direct model...`);
+        continue;
+      }
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        lastError = { code: "LLM_ERROR", message: `Gemini ${model} ${res.status}: ${errText.slice(0, 200)}` };
+        console.warn(`[GeminiDirect] ${model} ${res.status}, trying next direct model...`);
+        continue;
+      }
+
+      const body = (await res.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const content = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+      if (content.trim().length > 0) {
+        return { ok: true, content };
+      }
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") {
+        lastError = { code: "LLM_TIMEOUT", message: `Gemini ${model} timed out after ${timeoutMs}ms` };
+      } else {
+        lastError = { code: "LLM_ERROR", message: String(e) };
+      }
+    } finally {
+      clearTimeout(timeout);
     }
-    return { ok: false, code: "LLM_ERROR", message: String(e) };
-  } finally {
-    clearTimeout(timeout);
   }
+
+  return { ok: false, code: lastError.code, message: lastError.message };
 }
 
 async function callOnce(

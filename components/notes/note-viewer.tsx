@@ -11,6 +11,9 @@ import Link from "next/link";
 import type { Note, NoteSection } from "@/lib/types";
 import { formatShortDate } from "@/lib/utils";
 
+import { SvgDiagramViewer } from "@/components/notes/svg-diagram-viewer";
+import { MermaidViewer } from "@/components/mindmaps/mermaid-viewer";
+
 const sectionToneMap: Record<NoteSection, "qa" | "dilr" | "varc"> = {
   QA: "qa",
   DILR: "dilr",
@@ -43,6 +46,17 @@ function cleanNoteContent(rawContent: string): string {
     .replace(/\\implies/g, "⇒")
     .replace(/\\times/g, "×")
     .replace(/\\cdot/g, "·")
+    .replace(/\\approx/g, "≈")
+    .replace(/\\neq/g, "≠")
+    .replace(/\\le/g, "≤")
+    .replace(/\\ge/g, "≥")
+    .replace(/\\pm/g, "±")
+    .replace(/\\degree|\\circ/g, "°")
+    .replace(/\\theta/g, "θ")
+    .replace(/\\alpha/g, "α")
+    .replace(/\\beta/g, "β")
+    .replace(/\\pi/g, "π")
+    .replace(/\\sqrt\{([^}]+)\}/g, "√($1)")
     // Convert inline callout markers to blockquotes for automatic callout card styling
     .replace(/^(\[THE MISTAKE 80% OF STUDENTS MAKE\]:?)/gm, "> ⚠️ **$1**")
     .replace(/^(\[TRAP\]:?)/gm, "> ⚠️ **$1**")
@@ -150,6 +164,87 @@ export function NoteViewer({
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
+            code({ className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || "");
+              const lang = match?.[1]?.toLowerCase() ?? "";
+              const codeString = String(children).replace(/\n$/, "");
+
+              // 1. Mermaid Flowcharts & Mindmaps
+              if (
+                lang === "mermaid" ||
+                (!className &&
+                  (codeString.startsWith("graph ") ||
+                    codeString.startsWith("flowchart ") ||
+                    codeString.startsWith("mindmap") ||
+                    codeString.startsWith("classDiagram") ||
+                    codeString.startsWith("stateDiagram") ||
+                    codeString.startsWith("sequenceDiagram") ||
+                    codeString.startsWith("pie ")))
+              ) {
+                return (
+                  <div className="my-6">
+                    <MermaidViewer chart={codeString} topic={note?.topic ?? "Diagram"} />
+                  </div>
+                );
+              }
+
+              // 2. SVG Geometric Shapes, Graphs & Figures
+              if (
+                lang === "svg" ||
+                (lang === "xml" && codeString.trim().startsWith("<svg")) ||
+                codeString.trim().startsWith("<svg")
+              ) {
+                return (
+                  <SvgDiagramViewer
+                    svgCode={codeString}
+                    title={`${note?.topic ?? "Diagram"} — Figure`}
+                  />
+                );
+              }
+
+              // 3. Standard Code blocks
+              return (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            },
+
+            // Enhanced Table Rendering with Horizontal Scrolling & Notion-Style Headers
+            table({ children }) {
+              return (
+                <div className="my-6 w-full overflow-x-auto rounded-xl border border-hairline bg-surface shadow-xs">
+                  <table className="min-w-full divide-y divide-hairline text-left text-sm">
+                    {children}
+                  </table>
+                </div>
+              );
+            },
+            thead({ children }) {
+              return <thead className="bg-canvas-soft/80 font-bold text-ink">{children}</thead>;
+            },
+            th({ children }) {
+              return (
+                <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-ink border-r border-hairline last:border-r-0">
+                  {children}
+                </th>
+              );
+            },
+            td({ children }) {
+              return (
+                <td className="px-4 py-2.5 text-sm text-ink-secondary border-b border-hairline/60 border-r border-hairline/60 last:border-r-0">
+                  {children}
+                </td>
+              );
+            },
+            tr({ children }) {
+              return (
+                <tr className="hover:bg-primary/5 transition-colors odd:bg-surface even:bg-canvas-soft/30">
+                  {children}
+                </tr>
+              );
+            },
+
             blockquote({ children }) {
               const textContent = React.Children.toArray(children)
                 .map((child) => (typeof child === "string" ? child : ""))
