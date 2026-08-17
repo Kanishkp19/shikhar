@@ -73,7 +73,11 @@ export async function POST(request: Request) {
     const hasAllSections = requiredSections.every((s) => lowerContent.includes(s));
     const questionCount = (result.content.match(/(?:Question|Q\d+|Example \d+)/gi) || []).length;
 
-    const status = wordCount >= 1500 && hasAllSections ? "complete" : "draft";
+    // Individual solution blocks (not batched) — check for "Solution Q" pattern
+    const solutionCount = (result.content.match(/\*\*Solution Q\d+/gi) || []).length;
+    const hasIndividualSolutions = solutionCount >= 15; // At least 15 of 25-30 should be individual
+
+    const status = wordCount >= 3000 && hasAllSections && hasIndividualSolutions ? "complete" : "draft";
 
     // Save as a new row (auto-incrementing version per topic+section)
     const supabase = await createClient();

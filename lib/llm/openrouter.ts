@@ -52,17 +52,27 @@ export async function generateNotes(topic: string, section?: string): Promise<LL
       content: `Generate the complete, gold-standard CAT topper notes for topic: "${topic}"${sectionText}.
 
 Follow EVERY section of the notes skill in exact order:
-1. File header & Topic Introduction
+1. File header & Topic Introduction (100-150 words)
 2. Concept Map & Visual Taxonomy (\`\`\`mermaid flowchart/mindmap)
-3. All PART N concept sections: Cover EVERY formula, identity, theorem, 2D area, 3D solid, cone, frustum, sphere, recasting rule, and CAT shortcut in full depth.
-4. CONTEXT-ACCURATE SVG DIAGRAMS (\`\`\`svg ... \`\`\`): Every concept and worked example in Geometry, Mensuration, or Trigonometry MUST include its own dedicated, problem-specific SVG diagram showing labeled vertices (A, B, C, D, O, I), dimension markings, heights, angle arcs (30°, 45°, 60°), right-angle markers, and dashed construction lines.
-5. Worked Examples: Minimum 12 worked examples total with step-by-step solutions and diagrams.
-6. Practice Questions: Complete set of 25–30 questions for QA with full step-by-step worked solutions for every single question (Tier 1: 8–10 Qs, Tier 2: 10–12 Qs, Tier 3: 8–10 Qs).
-7. Speed Techniques (minimum 6)
-8. CAT Trap File (minimum 7 traps)
-9. Master Cheat Sheet with comprehensive Markdown comparison tables and ━━━ box separators.
+3. All PART N concept sections: Cover EVERY formula, identity, theorem, property, derivation, and CAT shortcut in full depth. For EACH sub-concept include ALL 7 items: plain English explanation (3-4 sentences), formula in code block with ALL variants, derivation/proof sketch, concrete numerical illustration or SVG diagram, [THE MISTAKE 80% OF STUDENTS MAKE], worked example with full Setup→Formula→Calculation→Trap→Verification, and at least one [TRAP]/[CAT TRICK]/[TOPPER INSIGHT] annotation.
+4. For Geometry/Mensuration/Trig topics: CONTEXT-ACCURATE SVG DIAGRAMS (\`\`\`svg ... \`\`\`) with labeled vertices, dimensions, angle arcs, right-angle markers. For Algebra/Number topics: concrete worked numerical examples per concept.
+5. Worked Examples: Minimum 12 worked examples total with full step-by-step solutions.
+6. Practice Questions: Complete set of 25–30 questions (Tier 1: 8–10, Tier 2: 10–12, Tier 3: 8–10).
+7. FULL WORKED SOLUTIONS: Write EACH solution Q1 through Q30 as a SEPARATE block with this EXACT format per question:
+   **Solution Q[N]:**
+   **Setup:** [given values, what to find]
+   **Formula:** [which formula, why]
+   **Calculation:** Step 1→Step 2→Step 3
+   **Answer:** [final answer]
+   **Trap:** [wrong approach]
+   **Time:** [seconds]
+   DO NOT batch multiple solutions into one paragraph. DO NOT say "similarly for remaining". Write out EVERY single solution individually.
+8. Speed Techniques (minimum 6, each with standard-vs-shortcut comparison showing time saved)
+9. CAT Trap File (minimum 7 traps, each with trigger phrasing from question paper)
+10. Master Cheat Sheet with ━━━ boxes: Core Formulas (min 15), Comparison Table (min 10 rows), Speed Tricks Table, 8 Golden Rules.
 
-Target 3,500–5,500+ words. Write in extreme depth. Do NOT summarize or truncate any section or question solution.`,
+TARGET: 4,000–6,000+ words. The Practice Questions + Solutions section alone should be 1,500–2,500 words.
+CRITICAL: Write in EXTREME depth. Do NOT summarize, truncate, batch, or skip ANY section, sub-concept, or question solution. Every formula needs a derivation. Every question needs an individual solution. This output is the student's ONLY study material for this topic.`,
     },
   ];
 
@@ -114,22 +124,39 @@ Target 3,500–5,500+ words. Write in extreme depth. Do NOT summarize or truncat
   // Clean scratch reasoning text
   content = stripScratchText(content);
 
+  // ─── Completeness retry: if too short or missing sections, ask for continuation ───
+  const wordCount = content.split(/\s+/).length;
+  const missingSections = findMissingSections(content);
+
+  if (wordCount < 3000 || missingSections.length > 0) {
+    const continuationResult = await requestContinuation(
+      content,
+      missingSections,
+      wordCount,
+      messages,
+      usedModel,
+    );
+    if (continuationResult) {
+      content = content + "\n\n" + stripScratchText(continuationResult);
+    }
+  }
+
   return { ok: true, content, model: usedModel };
 }
 
 /**
- * Strip internal model reasoning artefacts ("Wait, let me verify...", "Let's re-check...",
- * "Wait, let's re-verify...", "Let me recalculate...", etc.) from the output.
+ * Strip internal model reasoning artefacts from the output.
+ * Only removes explicit model "thinking out loud" patterns — never removes
+ * legitimate content sentences that happen to start with common English words.
  */
 function stripScratchText(content: string): string {
+  // Only target unambiguous model-reasoning patterns (never broad words like "So," or "Actually,")
   const patterns = [
-    /^.*?(?:Wait, let me (?:verify|re-verify|re-check|check|recalculate|fix)).*$/gim,
-    /^.*?(?:Let me (?:verify|re-verify|check|recalculate|fix|re-check)).*$/gim,
-    /^.*?(?:Let's (?:verify|re-verify|check|recalculate|fix|re-check)).*$/gim,
-    /^.*?(?:Hmm,?\s*).*$/gim,
-    /^.*?(?:Actually,?\s*).*$/gim,
-    /^.*?(?:So,?\s*).*$/gim,
-    /^\s*(?:Wait|Let|Let's|Hmm|Actually|So)[^.]*\.\s*/gim,
+    /^\s*Wait,? let me (?:verify|re-verify|re-check|check|recalculate|fix|think|reconsider)[^\n]*$/gim,
+    /^\s*Let me (?:verify|re-verify|re-check|check|recalculate|fix|reconsider|think about)[^\n]*$/gim,
+    /^\s*Let's (?:verify|re-verify|re-check|check|recalculate|fix|reconsider|think about)[^\n]*$/gim,
+    /^\s*Hmm,? (?:wait|let me|I think|I need to|that doesn't)[^\n]*$/gim,
+    /^\s*(?:Wait|Hold on),? (?:that's|this is|I made|the calculation)[^\n]*$/gim,
   ];
 
   let cleaned = content;
@@ -139,6 +166,103 @@ function stripScratchText(content: string): string {
   // Remove empty lines left behind (more than 2 consecutive)
   cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
   return cleaned.trim();
+}
+
+/**
+ * Find which required sections are missing from the generated content.
+ */
+function findMissingSections(content: string): string[] {
+  const lower = content.toLowerCase();
+  const missing: string[] = [];
+
+  const sections = [
+    { pattern: /(?:topic introduction|introduction)/i, label: "Topic Introduction" },
+    { pattern: /(?:concept map|visual taxonomy)/i, label: "Concept Map" },
+    { pattern: /(?:part\s+\d|core concepts)/i, label: "Concept Sections" },
+    { pattern: /(?:practice questions|tier\s+1)/i, label: "Practice Questions" },
+    { pattern: /(?:solution q\d|solution\s+q\d|full.*solutions)/i, label: "Full Worked Solutions" },
+    { pattern: /(?:speed technique|shortcut)/i, label: "Speed Techniques" },
+    { pattern: /(?:common trap|cat trap|trap file)/i, label: "CAT Trap File" },
+    { pattern: /(?:cheat sheet|golden rule|master.*matrix)/i, label: "Master Cheat Sheet" },
+  ];
+
+  for (const s of sections) {
+    if (!s.pattern.test(content)) missing.push(s.label);
+  }
+
+  // Check individual Q solutions exist (not batched)
+  const solutionCount = (content.match(/\*\*Solution Q\d+/gi) || []).length;
+  const questionCount = (content.match(/\*\*Q\d+\./gi) || []).length;
+  if (questionCount > 0 && solutionCount < questionCount * 0.7) {
+    missing.push(`Individual Solutions (found ${solutionCount} solutions for ${questionCount} questions)`);
+  }
+
+  return missing;
+}
+
+/**
+ * Send a continuation prompt to fill missing sections or add depth.
+ * Uses the same model cascade as the initial generation.
+ */
+async function requestContinuation(
+  existingContent: string,
+  missingSections: string[],
+  wordCount: number,
+  _originalMessages: ChatMessage[],
+  preferredModel: "gemini-2.5-flash" | "deepseek-chat",
+): Promise<string | null> {
+  const missingText = missingSections.length > 0
+    ? `The following sections are MISSING or INCOMPLETE: ${missingSections.join(", ")}.`
+    : "";
+  const depthText = wordCount < 3000
+    ? `The content is only ${wordCount} words (target: 4,000-6,000+). You need to add significant depth to concept explanations, derivations, and practice question solutions.`
+    : "";
+
+  const continuationMessages: ChatMessage[] = [
+    {
+      role: "system",
+      content: "You are continuing/completing CAT study notes. Output ONLY the missing or incomplete sections in the same markdown format. Do NOT repeat sections that are already complete. Do NOT add any preamble like 'Here are the missing sections'.",
+    },
+    {
+      role: "user",
+      content: `The following CAT notes were generated but are incomplete.
+
+${missingText}
+${depthText}
+
+Here is what was already generated (DO NOT repeat this, only ADD what's missing):
+
+---BEGIN EXISTING NOTES---
+${existingContent.slice(0, 12000)}
+---END EXISTING NOTES---
+
+Please generate ONLY the missing/incomplete sections listed above. Follow the exact same formatting and structure. For practice question solutions, write EACH solution as a SEPARATE block with Setup/Formula/Calculation/Answer/Trap/Time format.`,
+    },
+  ];
+
+  const CONTINUATION_MAX_TOKENS = 16384;
+  const CONTINUATION_TIMEOUT_MS = 120000;
+
+  try {
+    // Try the same model that produced the original content first
+    if (preferredModel === "gemini-2.5-flash") {
+      const direct = await callGeminiDirect(continuationMessages, 0.3, CONTINUATION_TIMEOUT_MS, CONTINUATION_MAX_TOKENS);
+      if (direct.ok && direct.content.trim().length > 100) return direct.content;
+    }
+
+    const groq = await callGroq(continuationMessages, 0.3, 45000);
+    if (groq.ok && groq.content.trim().length > 100) return groq.content;
+
+    const orFallback = await callOnce(
+      preferredModel === "deepseek-chat" ? FALLBACK_MODEL : PRIMARY_MODEL,
+      continuationMessages, 0.3, CONTINUATION_TIMEOUT_MS, CONTINUATION_MAX_TOKENS,
+    );
+    if (orFallback.ok && orFallback.content.trim().length > 100) return orFallback.content;
+  } catch (e) {
+    console.warn("[notes/generate] continuation request failed:", e);
+  }
+
+  return null;
 }
 
 /**
@@ -334,7 +458,7 @@ async function callGroq(
         model: "llama-3.3-70b-versatile",
         messages,
         temperature,
-        max_tokens: 8192,
+        max_tokens: 32768,
       }),
       signal: controller.signal,
     });
